@@ -4,10 +4,10 @@ import sports from './sports.svg'
 import competition from './competition.svg'
 
 export const categories = {
-  seminar: { label: 'Campus Seminars', blurb: 'Guest talks and academic sessions.', img: seminar, color: 'var(--blue)' },
-  workshop: { label: 'Workshops', blurb: 'Hands-on sessions to build real skills.', img: workshop, color: 'var(--coral)' },
-  sports: { label: 'Sports Events', blurb: 'Matches, tournaments and fitness days.', img: sports, color: 'var(--mint)' },
-  competition: { label: 'Competitions', blurb: 'Hackathons, quizzes and debates.', img: competition, color: 'var(--sun)' },
+  seminar: { label: 'Campus Seminars', blurb: 'Guest talks and academic sessions.', img: seminar, photo: new URL('./photos/seminar.jpg', import.meta.url).href, color: 'var(--blue)' },
+  workshop: { label: 'Workshops', blurb: 'Hands-on sessions to build real skills.', img: workshop, photo: new URL('./photos/workshop.jpg', import.meta.url).href, color: 'var(--coral)' },
+  sports: { label: 'Sports Events', blurb: 'Matches, tournaments and fitness days.', img: sports, photo: new URL('./photos/sports.jpg', import.meta.url).href, color: 'var(--mint)' },
+  competition: { label: 'Competitions', blurb: 'Hackathons, quizzes and debates.', img: competition, photo: new URL('./photos/competition.jpg', import.meta.url).href, color: 'var(--sun)' },
 }
 
 export const events = [

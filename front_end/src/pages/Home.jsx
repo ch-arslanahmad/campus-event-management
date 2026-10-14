@@ -5,7 +5,12 @@ import EventCard from '../components/EventCard.jsx'
 import Reveal from '../components/Reveal.jsx'
 import { categories } from '../assets/eventsData.js'
 import { getEvents } from '../assets/eventsStore.js'
-import hero from '../assets/hero.svg'
+import Photo from '../components/Photo.jsx'
+
+const uol1 = new URL('../assets/photos/uol-1.jpg', import.meta.url).href
+const uol2 = new URL('../assets/photos/uol-2.jpg', import.meta.url).href
+const uol3 = new URL('../assets/photos/uol-3.jpg', import.meta.url).href
+const uol4 = new URL('../assets/photos/uol-4.jpg', import.meta.url).href
 
 export default function Home() {
   const heroRef = useRef(null)
@@ -39,7 +44,21 @@ export default function Home() {
             </div>
           </div>
           <div className="hero__art">
-            <img src={hero} alt="Illustration of students joining campus events" className="hero__img" />
+            <div className="collage">
+              <span className="collage__ring" />
+              <Photo src={uol1} alt="University of Lahore campus" className="circle circle--main" />
+              <Photo src={uol2} alt="University of Lahore students" className="circle circle--a" />
+              <Photo src={uol3} alt="University of Lahore library" className="circle circle--b" />
+              <Photo src={uol4} alt="University of Lahore ground" className="circle circle--c" />
+              <div className="note note--top">
+                <strong>All campus events</strong>
+                <span>Seminars, workshops, sports and competitions in one place.</span>
+              </div>
+              <div className="note note--bottom">
+                <strong>Register in clicks</strong>
+                <span>Browse upcoming events, pick one and join.</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

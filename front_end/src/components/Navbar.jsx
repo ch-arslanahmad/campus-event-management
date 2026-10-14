@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { getCurrentUser, logout } from '../assets/auth.js'
+import Logo from './Logo.jsx'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -32,7 +33,7 @@ export default function Navbar() {
       <div className="progress" ref={bar} />
       <div className="container navbar__inner">
         <Link to="/" className="brand" onClick={close}>
-          <span className="brand__dot" /> CampusLink
+          <Logo /> University of Lahore
         </Link>
         <button className="navbar__toggle" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen(!open)}>
           {open ? 'Close' : 'Menu'}

@@ -187,3 +187,42 @@ form input:focus { border-color: var(--blue); outline: none; }
 .admin__table td { padding: 14px 16px; border-top: 1px solid #E4E6F7; vertical-align: middle; }
 .admin__row-actions { display: flex; gap: 8px; }
 @media (max-width: 680px) { .admin__form { grid-template-columns: 1fr; } }
+
+/* ===== University of Lahore branding, photo cards, hero collage ===== */
+.brand { font-size: 1.2rem; }
+
+/* Cleaner cards: no thin outline, soft shadow and an accent bar */
+.cat-card, .event-card { border: 0; background: var(--white); box-shadow: 0 10px 30px rgba(20,24,58,.09); overflow: hidden; position: relative; }
+.cat-card { padding: 0 0 26px; }
+.cat-card img, .cat-card .photo-fallback { width: 100%; aspect-ratio: 400 / 260; object-fit: cover; border-radius: 0; margin-bottom: 18px; }
+.cat-card h3, .cat-card p { padding: 0 22px; }
+.cat-card::after, .event-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--accent); }
+.cat-card:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(20,24,58,.15); }
+.event-card:hover { box-shadow: 0 18px 36px rgba(20,24,58,.15); }
+.event-card__img { border-bottom: 0; object-fit: cover; }
+.event-card__body { padding-bottom: 26px; }
+.photo-fallback { background: linear-gradient(135deg, #3B5BFF, #8A9BFF); }
+
+/* Hero collage: overlapping circular photos and two info notes */
+.hero__art { container-type: inline-size; width: 100%; max-width: 540px; margin: 0 auto; }
+.collage { position: relative; width: 100%; aspect-ratio: 1; }
+.collage__ring { position: absolute; left: 12%; top: 12%; width: 76%; aspect-ratio: 1; border-radius: 50%; background: #DDE3FF; }
+.circle { position: absolute; aspect-ratio: 1; border-radius: 50%; object-fit: cover; border: 6px solid var(--white); box-shadow: 0 12px 30px rgba(20,24,58,.2); animation: floaty 7s ease-in-out infinite; }
+.circle--main { width: 52%; left: 24%; top: 24%; border-width: 8px; border-color: var(--blue); }
+.circle--a { width: 24%; right: 3%; top: 4%; animation-delay: -2s; }
+.circle--b { width: 17%; left: 70%; top: 22%; animation-delay: -4s; }
+.circle--c { width: 17%; left: 2%; bottom: 5%; animation-delay: -1s; }
+.circle--a.photo-fallback { background: var(--mint); }
+.circle--b.photo-fallback { background: var(--sun); }
+.circle--c.photo-fallback { background: var(--coral); }
+.note { position: absolute; z-index: 2; width: 46%; background: var(--white); border-radius: 16px; padding: 3.4cqw 3.8cqw 3.6cqw; box-shadow: 0 12px 30px rgba(20,24,58,.14); display: flex; flex-direction: column; gap: 4px; animation: floaty 8s ease-in-out infinite; }
+.note::before { content: ''; width: 38%; height: 8px; border-radius: 99px; background: var(--coral); margin-bottom: 6px; }
+.note strong { font: 800 clamp(.8rem, 3.3cqw, 1.05rem) 'Bricolage Grotesque', sans-serif; line-height: 1.15; }
+.note span { color: var(--muted); font-size: clamp(.68rem, 2.5cqw, .88rem); line-height: 1.35; }
+.note--top { left: 0; top: 17%; }
+.note--bottom { right: 0; bottom: 13%; animation-delay: -3s; }
+.note--bottom::before { background: var(--mint); }
+
+/* Logo */
+.brand__logo { height: 46px; width: auto; display: block; }
+.brand--light .brand__logo { background: var(--white); border-radius: 10px; padding: 4px; }
