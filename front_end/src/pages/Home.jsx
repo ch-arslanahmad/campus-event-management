@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import CategoryCard from '../components/CategoryCard.jsx'
 import EventCard from '../components/EventCard.jsx'
 import Reveal from '../components/Reveal.jsx'
-import { categories, events } from '../assets/eventsData.js'
+import { categories } from '../assets/eventsData.js'
+import { getEvents } from '../assets/eventsStore.js'
 import hero from '../assets/hero.svg'
 
 export default function Home() {
@@ -66,7 +67,7 @@ export default function Home() {
         <div className="container">
           <Reveal from="left"><h2>Coming up soon</h2></Reveal>
           <div className="grid grid--3">
-            {events.slice(0, 3).map((e, i) => (
+            {getEvents().slice(0, 3).map((e, i) => (
               <Reveal key={e.id} delay={i * 140}><EventCard event={e} /></Reveal>
             ))}
           </div>

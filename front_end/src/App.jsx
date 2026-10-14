@@ -5,6 +5,7 @@ import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import Events from './pages/Events.jsx'
+import Admin from './pages/Admin.jsx'
 
 export default function App() {
   const { pathname } = useLocation()
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
       <Footer />

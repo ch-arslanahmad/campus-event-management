@@ -2,14 +2,15 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import EventCard from '../components/EventCard.jsx'
 import Reveal from '../components/Reveal.jsx'
-import { categories, events } from '../assets/eventsData.js'
+import { categories } from '../assets/eventsData.js'
+import { getEvents } from '../assets/eventsStore.js'
 
 export default function Events() {
   const [params, setParams] = useSearchParams()
   const [query, setQuery] = useState('')
   const active = params.get('category') || 'all'
 
-  const list = events.filter(
+  const list = getEvents().filter(
     (e) =>
       (active === 'all' || e.category === active) &&
       e.title.toLowerCase().includes(query.toLowerCase())

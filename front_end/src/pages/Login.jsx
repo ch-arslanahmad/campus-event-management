@@ -18,7 +18,7 @@ export default function Login() {
     }
     const res = login({ ...form, role })
     if (res.error) { setError(res.error); return }
-    navigate('/events')
+    navigate(res.user.role === 'admin' ? '/admin' : '/events')
   }
 
   return (

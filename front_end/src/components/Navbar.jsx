@@ -40,6 +40,7 @@ export default function Navbar() {
         <nav className={`navbar__links ${open ? 'is-open' : ''}`}>
           <NavLink to="/" end onClick={close}>Home</NavLink>
           <NavLink to="/events" onClick={close}>Events</NavLink>
+          {user?.role === 'admin' && <NavLink to="/admin" onClick={close}>Dashboard</NavLink>}
           {user ? (
             <>
               <span className="navbar__user">Hi, {user.name}{user.role === 'admin' ? ' (admin)' : ''}</span>
