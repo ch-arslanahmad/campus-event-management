@@ -1,6 +1,7 @@
 // Demo-only auth stored in the browser. Replace with real API calls and hashed passwords on a backend.
 const USERS = 'campuslink_users'
 const CURRENT = 'campuslink_current'
+// Seed-only demo account. Authentication moves to the backend before deployment.
 const ADMIN = { name: 'Admin', email: 'admin@campus.com', password: 'admin123', role: 'admin' }
 
 const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }
@@ -15,9 +16,7 @@ export function register({ name, email, password }) {
 
 export function login({ email, password, role }) {
   const u = users().find((x) => x.email === email.trim().toLowerCase())
-  if (!u) return { error: 'No account found with this email. Sign up first.' }
-  if (u.password !== password) return { error: 'Wrong password. Try again.' }
-  if (u.role !== role) return { error: role === 'admin' ? 'This account is not an admin account.' : 'This is an admin account. Use the Admin tab.' }
+  if (!u || u.password !== password || u.role !== role) return { error: 'Invalid email, password, or account type.' }
   localStorage.setItem(CURRENT, JSON.stringify({ name: u.name, email: u.email, role: u.role }))
   return { user: u }
 }
