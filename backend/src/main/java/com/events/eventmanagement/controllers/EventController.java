@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,10 +29,16 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponse>> getAllEvents() {
-        // Logic to retrieve all events from the database
-        List<Event> events_list = eventService.list();
+    public ResponseEntity<List<EventResponse>> getAllEvents(
+        @RequestParam(name = "category", required = false) String category
+    ) {
+        List<Event> events_list =
+            category != null && !category.isBlank()
+                ? eventService.listByCategory(category)
+                : eventService.list();
+
         List<EventResponse> events = EventResponse.fromList(events_list);
+
         return ResponseEntity.status(200).body(events);
     }
 
@@ -41,10 +48,9 @@ public class EventController {
         Event event = eventService.getById(id);
 
         EventResponse eventResponse = EventResponse.from(event);
+
         return ResponseEntity.status(200).body(eventResponse);
     }
-
-    
 
     @PostMapping
     public ResponseEntity<?> createEvent(

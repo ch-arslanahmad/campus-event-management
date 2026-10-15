@@ -2,8 +2,10 @@ package com.events.eventmanagement.services;
 
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.http.HttpStatus;
@@ -338,11 +340,29 @@ public class EventService {
     }
 
     // Get events by category, /api/events/?category=
-    public List<Event> getByCategory(Event.CategoryType category) {
+    public List<Event> listByCategory(String category) {
         if (category == null) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Category is required."
+            );
+        }
+        CategoryType type = Arrays.stream(CategoryType.values())
+            .filter(c -> c.name().equalsIgnoreCase(category))
+            .findFirst()
+            .orElse(null);
+
+        if (type == null) {
+            String validCategories = Arrays.stream(CategoryType.values())
+                .map(Enum::name)
+                .collect(Collectors.joining(", "));
+
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid category '" +
+                    category +
+                    "'. Valid categories: " +
+                    validCategories
             );
         }
 
@@ -350,11 +370,7 @@ public class EventService {
             .values()
             .stream()
             .filter(event ->
-                event
-                    .getCategory()
-                    .toString()
-                    .toLowerCase()
-                    .equals(category.toString().toLowerCase())
+                event.getCategory().name().equalsIgnoreCase(category)
             )
             .toList();
     }
