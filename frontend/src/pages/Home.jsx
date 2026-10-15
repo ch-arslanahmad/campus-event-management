@@ -4,7 +4,7 @@ import CategoryCard from '../components/CategoryCard.jsx'
 import EventCard from '../components/EventCard.jsx'
 import Reveal from '../components/Reveal.jsx'
 import { categories } from '../assets/eventsData.js'
-import { getEvents } from '../assets/eventsStore.js'
+import { getEvents } from '../assets/data.js'
 import Photo from '../components/Photo.jsx'
 
 const uol1 = new URL('../assets/photos/uol-1.jpg', import.meta.url).href
