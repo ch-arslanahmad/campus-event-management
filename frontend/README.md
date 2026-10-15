@@ -1,19 +1,33 @@
-# React + Vite
+# Campus Event Management Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React and Vite frontend for the campus event management site.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```
+npm install
+npm run dev
+```
 
-## React Compiler
+Serves at http://localhost:5173.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Scripts
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+- `npm run dev` start the dev server
+- `npm run build` production build into `dist/`
+- `npm run preview` preview the build
+- `npm run lint` run ESLint
 
-## Expanding the Oxlint configuration
+## Routes
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- `/` home page
+- `/events` all events, optional `?category=`
+- `/login` login, optional `?role=admin`
+- `/signup` sign up
+- `/admin` admin dashboard, admins only
+
+## Data and auth
+
+Events are sample data in `src/assets/eventsData.js`. Login and sign up are
+demo only, stored in `localStorage`, and get replaced by the real API.
+Demo admin: `admin@campus.com` / `admin123`.
