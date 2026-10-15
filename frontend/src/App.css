@@ -72,6 +72,7 @@ img { max-width: 100%; display: block; }
 .chip.is-active { background: var(--ink); color: var(--white); }
 .search { margin-left: auto; padding: 10px 18px; border-radius: 999px; border: 2px solid #C9CDEB; font: 400 .95rem 'DM Sans'; min-width: 220px; }
 .empty { color: var(--muted); padding: 40px 0; }
+.result-count { color: var(--muted); font-weight: 700; margin: -16px 0 22px; }
 
 /* Login */
 .login { background: var(--bg); min-height: 70vh; display: grid; place-items: center; }
@@ -226,3 +227,48 @@ form input:focus { border-color: var(--blue); outline: none; }
 /* Logo */
 .brand__logo { height: 46px; width: auto; display: block; }
 .brand--light .brand__logo { background: var(--white); border-radius: 10px; padding: 4px; }
+
+/* ===== Registration and student dashboard ===== */
+.eyebrow { color: var(--blue); font-size: .82rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.back-link { display: inline-flex; font-weight: 700; margin-bottom: 26px; transition: transform .2s; }
+.back-link:hover { transform: translateX(-4px); color: var(--blue); }
+.detail-layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 30px; align-items: start; }
+.detail-card, .registration-card, .state-card, .registration-item { border-radius: 24px; background: var(--white); box-shadow: 0 14px 40px rgba(20,24,58,.1); }
+.detail-card { padding: clamp(28px, 5vw, 58px); position: relative; overflow: hidden; }
+.detail-card::after { content: ''; height: 8px; background: var(--accent); position: absolute; inset: 0 0 auto; }
+.detail-card h1 { margin: 14px 0; }
+.event-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 34px; }
+.event-facts div { background: var(--bg); border-radius: 14px; padding: 15px; }
+.event-facts dt { color: var(--muted); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.event-facts dd { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.08rem; font-weight: 700; margin: 3px 0 0; }
+.registration-card { padding: 32px; border: 2px solid var(--ink); position: sticky; top: 94px; }
+.registration-card h2 { font-size: 1.7rem; margin-bottom: 12px; }
+.registration-card .error { margin: -10px 0 12px; }
+.registration-card button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.my-registrations { margin-top: 72px; max-width: 760px; }
+.my-registrations h2 { margin-bottom: 10px; }
+.registration-list { display: grid; gap: 12px; list-style: none; margin-top: 18px; }
+.registration-list li { display: flex; justify-content: space-between; gap: 16px; padding: 17px 20px; border-radius: 14px; background: var(--bg); }
+.registration-list span { color: var(--muted); font-size: .92rem; }
+.dashboard { min-height: 66vh; background: linear-gradient(180deg, var(--bg), var(--white) 55%); }
+.dashboard h1 { margin-bottom: 12px; }
+.state-card { padding: 36px; margin-top: 34px; max-width: 650px; }
+.state-card h2 { font-size: 1.5rem; margin-bottom: 10px; }
+.state-card p { color: var(--muted); margin-bottom: 22px; }
+.registration-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 34px; }
+.registration-item { padding: 25px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; border-bottom: 5px solid var(--accent, var(--blue)); }
+.registration-item h2 { font-size: 1.3rem; margin: 0; }
+.registration-item p, .registration-item small { color: var(--muted); }
+.text-button { background: transparent; border: 0; border-bottom: 2px solid var(--coral); color: var(--ink); cursor: pointer; font: 700 .92rem 'DM Sans', sans-serif; margin-top: 7px; padding: 2px 0; }
+.text-button:hover { color: var(--coral); }
+
+@media (max-width: 960px) {
+  .detail-layout { grid-template-columns: 1fr; }
+  .registration-card { position: static; }
+  .registration-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 680px) {
+  .event-facts, .registration-grid { grid-template-columns: 1fr; }
+  .detail-card, .registration-card, .state-card { padding: 24px; }
+  .registration-list li { flex-direction: column; gap: 4px; }
+}
