@@ -2,10 +2,10 @@ package com.events.eventmanagement.services;
 
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
-import java.util.Arrays;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,7 @@ public class EventService {
                     "AI Seminar",
                     "Introduction to AI",
                     "2026-10-15",
-                    "10:00",
+                    "10:00 AM",
                     "Hall A",
                     CategoryType.seminar,
                     100,
@@ -39,7 +39,7 @@ public class EventService {
                     "Java Workshop",
                     "Hands-on Java programming",
                     "2026-10-16",
-                    "11:00",
+                    "11:00 AM",
                     "Lab 1",
                     Event.CategoryType.workshop,
                     40,
@@ -54,7 +54,7 @@ public class EventService {
                     "Football Tournament",
                     "Inter-department football match",
                     "2026-10-17",
-                    "09:00",
+                    "09:00 AM",
                     "Sports Ground",
                     Event.CategoryType.sports,
                     200,
@@ -69,7 +69,7 @@ public class EventService {
                     "Coding Competition",
                     "Competitive programming contest",
                     "2026-10-18",
-                    "12:00",
+                    "12:00 PM",
                     "Lab 2",
                     Event.CategoryType.competition,
                     60,
@@ -84,7 +84,7 @@ public class EventService {
                     "Tech Conference",
                     "Latest technology trends",
                     "2026-10-19",
-                    "10:30",
+                    "10:30 AM",
                     "Auditorium",
                     Event.CategoryType.conference,
                     300,
@@ -99,7 +99,7 @@ public class EventService {
                     "Literary Society Meetup",
                     "Poetry and creative writing",
                     "2026-10-20",
-                    "14:00",
+                    "02:00 PM",
                     "Room 101",
                     Event.CategoryType.seminar,
                     50,
@@ -114,7 +114,7 @@ public class EventService {
                     "Cybersecurity Seminar",
                     "Introduction to ethical hacking",
                     "2026-10-21",
-                    "11:00",
+                    "11:00 AM",
                     "Hall B",
                     Event.CategoryType.seminar,
                     120,
@@ -129,7 +129,7 @@ public class EventService {
                     "Spring Boot Workshop",
                     "Building REST APIs",
                     "2026-10-22",
-                    "13:00",
+                    "01:00 PM",
                     "Lab 3",
                     Event.CategoryType.workshop,
                     35,
@@ -144,7 +144,7 @@ public class EventService {
                     "Cricket Match",
                     "Annual university cricket match",
                     "2026-10-23",
-                    "09:30",
+                    "09:30 AM",
                     "Cricket Ground",
                     Event.CategoryType.sports,
                     250,
@@ -159,7 +159,7 @@ public class EventService {
                     "Hackathon",
                     "Build a solution in 24 hours",
                     "2026-10-24",
-                    "08:00",
+                    "08:00 AM",
                     "Innovation Lab",
                     Event.CategoryType.competition,
                     80,
@@ -174,7 +174,7 @@ public class EventService {
                     "Software Engineering Conference",
                     "Modern software development",
                     "2026-10-25",
-                    "10:00",
+                    "10:00 AM",
                     "Main Auditorium",
                     Event.CategoryType.conference,
                     180,
@@ -189,7 +189,7 @@ public class EventService {
                     "Photography Exhibition",
                     "Student photography showcase",
                     "2026-10-26",
-                    "15:00",
+                    "03:00 PM",
                     "Art Gallery",
                     Event.CategoryType.workshop,
                     70,
@@ -204,7 +204,7 @@ public class EventService {
                     "Data Science Seminar",
                     "Introduction to data analytics",
                     "2026-10-27",
-                    "10:00",
+                    "10:00 AM",
                     "Hall C",
                     Event.CategoryType.seminar,
                     90,
@@ -219,7 +219,7 @@ public class EventService {
                     "Git Workshop",
                     "Version control for beginners",
                     "2026-10-28",
-                    "12:00",
+                    "12:00 PM",
                     "Lab 4",
                     Event.CategoryType.workshop,
                     45,
@@ -234,7 +234,7 @@ public class EventService {
                     "Basketball Tournament",
                     "Inter-university basketball",
                     "2026-10-29",
-                    "09:00",
+                    "09:00 AM",
                     "Indoor Court",
                     Event.CategoryType.sports,
                     100,
@@ -249,7 +249,7 @@ public class EventService {
                     "Project Presentation Contest",
                     "Final-year project competition",
                     "2026-10-30",
-                    "11:00",
+                    "11:00 AM",
                     "Seminar Room",
                     Event.CategoryType.competition,
                     75,
@@ -264,7 +264,7 @@ public class EventService {
                     "Cloud Computing Conference",
                     "Cloud infrastructure and deployment",
                     "2026-10-31",
-                    "10:00",
+                    "10:00 AM",
                     "Auditorium B",
                     Event.CategoryType.conference,
                     220,
@@ -279,7 +279,7 @@ public class EventService {
                     "Programming Society Meetup",
                     "Discuss coding projects",
                     "2026-11-01",
-                    "14:00",
+                    "02:00 PM",
                     "Room 202",
                     Event.CategoryType.seminar,
                     40,
@@ -294,7 +294,7 @@ public class EventService {
                     "Database Design Seminar",
                     "Relational database fundamentals",
                     "2026-11-02",
-                    "11:30",
+                    "11:30 AM",
                     "Hall A",
                     Event.CategoryType.seminar,
                     110,
@@ -309,7 +309,7 @@ public class EventService {
                     "Docker Workshop",
                     "Containerization for developers",
                     "2026-11-03",
-                    "13:30",
+                    "01:30 PM",
                     "Lab 5",
                     Event.CategoryType.workshop,
                     30,
@@ -341,31 +341,6 @@ public class EventService {
 
     // Get events by category, /api/events/?category=
     public List<Event> listByCategory(String category) {
-        if (category == null) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Category is required."
-            );
-        }
-        CategoryType type = Arrays.stream(CategoryType.values())
-            .filter(c -> c.name().equalsIgnoreCase(category))
-            .findFirst()
-            .orElse(null);
-
-        if (type == null) {
-            String validCategories = Arrays.stream(CategoryType.values())
-                .map(Enum::name)
-                .collect(Collectors.joining(", "));
-
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid category '" +
-                    category +
-                    "'. Valid categories: " +
-                    validCategories
-            );
-        }
-
         return events
             .values()
             .stream()
@@ -388,6 +363,9 @@ public class EventService {
     public Long create(Event event) {
         Long newId = idSequence.getAndIncrement(); // server assigns the id
         event.setId(newId);
+        event.setCreated_at(
+            LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()
+        );
         events.put(newId, event);
         return newId;
     }
