@@ -4,8 +4,9 @@ import CategoryCard from '../components/CategoryCard.jsx'
 import EventCard from '../components/EventCard.jsx'
 import Reveal from '../components/Reveal.jsx'
 import { categories } from '../assets/eventsData.js'
-import { getEvents } from '../assets/eventsStore.js'
+import { getEvents } from '../assets/data.js'
 import Photo from '../components/Photo.jsx'
+import { useAuth } from '../assets/AuthContext.jsx'
 
 const uol1 = new URL('../assets/photos/uol-1.jpg', import.meta.url).href
 const uol2 = new URL('../assets/photos/uol-2.jpg', import.meta.url).href
@@ -14,6 +15,7 @@ const uol4 = new URL('../assets/photos/uol-4.jpg', import.meta.url).href
 
 export default function Home() {
   const heroRef = useRef(null)
+  const { user } = useAuth()
 
   // Parallax: hero artwork and shapes drift at different speeds while scrolling
   useEffect(() => {
@@ -40,7 +42,9 @@ export default function Home() {
             <p className="lead">Browse seminars, workshops, sports events and competitions, then register in a few clicks.</p>
             <div className="hero__actions">
               <Link to="/events" className="btn btn--primary">Browse events</Link>
-              <Link to="/login" className="btn btn--outline">Log in</Link>
+              <Link to={user ? (user.role === 'admin' ? '/dashboard' : '/my-events') : '/login'} className="btn btn--outline">
+                {user ? (user.role === 'admin' ? 'Open dashboard' : 'My events') : 'Log in'}
+              </Link>
             </div>
           </div>
           <div className="hero__art">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { categories } from '../assets/eventsData.js'
-import { getEvents, addEvent, updateEvent, deleteEvent } from '../assets/eventsStore.js'
+import { getEvents, createEvent, updateEvent, deleteEvent } from '../assets/data.js'
 import { getCurrentUser } from '../assets/auth.js'
 
 const empty = { title: '', category: 'seminar', date: '', time: '', venue: '', desc: '' }
@@ -25,7 +25,7 @@ function Panel() {
       setList(updateEvent(editingId, form))
       setMessage('Event updated.')
     } else {
-      setList(addEvent(form))
+      setList(createEvent(form))
       setMessage('Event added.')
     }
     reset()
