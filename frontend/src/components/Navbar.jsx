@@ -35,8 +35,9 @@ export default function Navbar() {
         <Link to="/" className="brand" onClick={close}>
           <Logo /> University of Lahore
         </Link>
-        <button className="navbar__toggle" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {open ? 'Close' : 'Menu'}
+        <button className="navbar__toggle" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span className="hamburger-icon" aria-hidden="true"><i /><i /><i /></span>
+          <span className="sr-only">{open ? 'Close' : 'Menu'}</span>
         </button>
         <nav className={`navbar__links ${open ? 'is-open' : ''}`}>
           <NavLink to="/" end onClick={close}>Home</NavLink>
