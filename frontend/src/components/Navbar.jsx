@@ -44,6 +44,7 @@ export default function Navbar() {
           {user && <NavLink to={user.role === 'admin' ? '/dashboard' : '/my-events'} onClick={close}>{user.role === 'admin' ? 'Dashboard' : 'My events'}</NavLink>}
           {user ? (
             <>
+              <NavLink to="/profile" onClick={close}>Profile</NavLink>
               <span className="navbar__user">Hi, {user.name}{user.role === 'admin' ? ' (admin)' : ''}</span>
               <button className="btn btn--outline btn--small" onClick={signOut}>Log out</button>
             </>

@@ -262,6 +262,25 @@ form input:focus { border-color: var(--blue); outline: none; }
 .text-button { background: transparent; border: 0; border-bottom: 2px solid var(--coral); color: var(--ink); cursor: pointer; font: 700 .92rem 'DM Sans', sans-serif; margin-top: 7px; padding: 2px 0; }
 .text-button:hover { color: var(--coral); }
 
+/* Demo profiles */
+.demo-login { background: #EEF0FF; border-radius: 12px; color: var(--ink); display: grid; gap: 2px; font-size: .86rem; margin-top: 20px; padding: 12px 14px; }
+.demo-login span { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; }
+.profile-page { min-height: 66vh; background: linear-gradient(180deg, var(--bg), var(--white) 56%); }
+.profile-card { align-items: center; background: var(--white); border-radius: 24px; box-shadow: 0 14px 40px rgba(20,24,58,.1); display: flex; gap: 22px; margin-bottom: 24px; padding: 34px; }
+.profile-avatar { align-items: center; background: linear-gradient(135deg, var(--blue), #8393FF); border-radius: 50%; color: var(--white); display: grid; flex: 0 0 86px; font: 800 1.8rem 'Bricolage Grotesque', sans-serif; height: 86px; place-items: center; width: 86px; }
+.profile-intro h1 { margin-bottom: 5px; }
+.profile-intro > p:last-child { color: var(--muted); }
+.profile-title { color: var(--blue); font-weight: 700; margin-bottom: 2px; }
+.role-badge { background: var(--sun); border-radius: 999px; font-size: .82rem; font-weight: 800; margin-left: auto; padding: 7px 13px; }
+.profile-layout { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+.profile-panel { background: var(--white); border-radius: 20px; box-shadow: 0 10px 30px rgba(20,24,58,.08); padding: 28px; }
+.profile-panel h2 { font-size: 1.4rem; margin-bottom: 14px; }
+.profile-panel > p { color: var(--muted); }
+.profile-facts { display: grid; gap: 12px; }
+.profile-facts div { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+.profile-facts dt { color: var(--muted); font-size: .78rem; font-weight: 700; text-transform: uppercase; }
+.profile-facts dd { font-weight: 700; margin: 2px 0 0; }
+
 @media (max-width: 960px) {
   .detail-layout { grid-template-columns: 1fr; }
   .registration-card { position: static; }
@@ -270,5 +289,8 @@ form input:focus { border-color: var(--blue); outline: none; }
 @media (max-width: 680px) {
   .event-facts, .registration-grid { grid-template-columns: 1fr; }
   .detail-card, .registration-card, .state-card { padding: 24px; }
+  .profile-card { align-items: flex-start; flex-wrap: wrap; padding: 24px; }
+  .role-badge { margin-left: 0; }
+  .profile-layout { grid-template-columns: 1fr; }
   .registration-list li { flex-direction: column; gap: 4px; }
 }

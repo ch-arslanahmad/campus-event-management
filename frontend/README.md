@@ -27,6 +27,7 @@ Serves at http://localhost:5173.
 - `/signup` sign up
 - `/dashboard` protected admin dashboard
 - `/my-events` protected student registrations page
+- `/profile` protected role-aware demo profile
 - `/admin` legacy admin dashboard route, admins only
 
 ## Data and auth
@@ -35,6 +36,8 @@ Events and registrations pass through `src/assets/data.js`, which currently uses
 demo data and `localStorage` so it can be replaced by API calls later. Login and
 sign up are also demo-only and stored in `localStorage`.
 
-The admin credentials below are a development seed, not production credentials.
-They must move to server-side authentication with hashed passwords before any
-deployment: `admin@campus.com` / `admin123`.
+The credentials below are development seeds, not production credentials. They
+must move to server-side authentication with hashed passwords before deployment:
+
+- Student: `student@campus.com` / `student123`
+- Admin: `admin@campus.com` / `admin123`

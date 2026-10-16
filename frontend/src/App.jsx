@@ -9,6 +9,7 @@ import Admin from './pages/Admin.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import EventDetails from './pages/EventDetails.jsx'
 import MyEvents from './pages/MyEvents.jsx'
+import Profile from './pages/Profile.jsx'
 
 export default function App() {
   const { pathname } = useLocation()
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-events" element={<MyEvents />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/event" element={<EventDetails />} />
         </Routes>
       </main>
