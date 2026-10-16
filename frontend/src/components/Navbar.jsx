@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { getCurrentUser, logout } from '../assets/auth.js'
+import { useAuth } from '../assets/AuthContext.jsx'
 import Logo from './Logo.jsx'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const bar = useRef(null)
   const header = useRef(null)
-  useLocation() // re-read the logged-in user after every page change
+  useLocation()
   const navigate = useNavigate()
-  const user = getCurrentUser()
+  const { user, logout } = useAuth()
   const close = () => setOpen(false)
   const signOut = () => { logout(); close(); navigate('/') }
 

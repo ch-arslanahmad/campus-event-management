@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { login } from '../assets/auth.js'
+import { useAuth } from '../assets/AuthContext.jsx'
 
 export default function Login() {
   const [params] = useSearchParams()
@@ -9,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
+  const { login } = useAuth()
 
   const submit = (e) => {
     e.preventDefault()
