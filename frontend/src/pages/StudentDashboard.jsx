@@ -12,7 +12,7 @@ export default function StudentDashboard({ user }) {
   }
 
   return <section className="section dashboard"><div className="container">
-    <p className="eyebrow">Student dashboard</p><h1>Your campus calendar</h1>
+    <p className="eyebrow">Student account</p><h1>My events</h1>
     <p className="lead">Welcome back, {user.name}. Keep track of every event you have joined.</p>
     {!registrations.length ? <div className="state-card"><h2>Nothing on your calendar yet</h2><p>Discover an event that sparks your interest and reserve your place.</p><Link to="/events" className="btn btn--primary">Explore events</Link></div> : <div className="registration-grid">{registrations.map((registration) => {
       const event = getEventById(registration.eventId)

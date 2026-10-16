@@ -1,5 +1,6 @@
 import Photo from './Photo.jsx'
 import { categories } from '../assets/eventsData.js'
+import { Link } from 'react-router-dom'
 
 export default function EventCard({ event }) {
   const c = categories[event.category]
@@ -14,7 +15,7 @@ export default function EventCard({ event }) {
           <li>{event.date} at {event.time}</li>
           <li>{event.venue}</li>
         </ul>
-        <button className="btn btn--outline btn--small">Register</button>
+        <Link className="btn btn--outline btn--small" to={`/event?id=${event.id}`}>View & register</Link>
       </div>
     </article>
   )

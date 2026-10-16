@@ -25,7 +25,8 @@ Serves at http://localhost:5173.
 - `/event?id=1` standalone event details and demo registration
 - `/login` login, optional `?role=admin`
 - `/signup` sign up
-- `/dashboard` protected dashboard for students and admins
+- `/dashboard` protected admin dashboard
+- `/my-events` protected student registrations page
 - `/admin` legacy admin dashboard route, admins only
 
 ## Data and auth
