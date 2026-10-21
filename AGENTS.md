@@ -12,6 +12,7 @@
 Architecture decisions live in `documentation/adr/`. Read them before "fixing" stack, structure, or doc layout:
 
 - ADR-0001: Backend Spring Boot/Java (brief suggests Node/Flask/Django — deviation is intentional), frontend React, DB MySQL, Java 17+.
+- ADR-0002: JWTs live in httpOnly cookies, not localStorage (full-cookie auth: access + rotated refresh, one-origin deploy). Guide: `documentation/JWT-STORAGE.md`.
 
 ## Current state
 

@@ -36,7 +36,7 @@ public class JWTFilter extends OncePerRequestFilter {
         // 2. check if cookies are null
         if (cookies == null) {
             System.out.println("No cookies found");
-            return;
+            filterChain.doFilter(request, response);
         }
 
         // 3. fetch the JWT token if available
@@ -79,7 +79,7 @@ public class JWTFilter extends OncePerRequestFilter {
             userID,
             null,
             List.of(
-                new SimpleGrantedAuthority("ROLE_" + role.name().toLowerCase())
+                new SimpleGrantedAuthority("ROLE_" + role.name().toUpperCase())
             )
         );
 
