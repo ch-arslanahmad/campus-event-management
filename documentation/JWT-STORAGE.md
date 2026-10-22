@@ -59,7 +59,7 @@ fetch("/api/registrations", { credentials: "include" })
   → response: normal JSON, no Set-Cookie, token NOT re-issued
 ```
 
-- **No cookie in jar = 401.** Protected endpoint before login, fresh/incognito browser, other tool. Public endpoint (`GET /api/events`) work either way.
+- **No cookie in jar = 401.** Everything except `/api/auth/login` and `/api/auth/register` is protected, `GET /api/events` included. Browsing events needs a cookie. Fresh/incognito browser, other tool: same 401.
 - **Outside browser**: curl/Postman no manage jar alone. `curl -c cookies.txt` login to _save_, `-b cookies.txt` later call to _send_. Why curl test 401, webapp work.
 - **Access expire?** 401, frontend redirect to login. No refresh token here, nothing to retry. Nobody ever read token.
 
