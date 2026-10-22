@@ -1,5 +1,8 @@
 package com.events.eventmanagement.config;
 
+import com.events.eventmanagement.config.JWTUtil.TokenClaims;
+import com.events.eventmanagement.models.User.ROLE;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -34,54 +37,44 @@ public class JWTFilter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies(); // get all cookies
 
         // 2. check if cookies are null
-        if (cookies == null) {
-            SecurityContextHolder.clearContext(); // clear the security context
-            System.out.println("No cookies found");
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 3. fetch the JWT token if available
-        for (Cookie c : cookies) {
-            if ("jwt_token".equals(c.getName())) {
-                // System.out.println(c.getName() + " : " + c.getValue()); //
-                // check if the cookie name is "access"
-                token = c.getValue(); // get the value of the access cookie
-                break;
+        if (cookies != null) {
+            // 3. fetch the JWT token if available
+            for (Cookie c : cookies) {
+                if ("jwt_token".equals(c.getName())) {
+                    // System.out.println(c.getName() + " : " + c.getValue()); //
+                    // check if the cookie name is "access"
+                    token = c.getValue(); // get the value of the access cookie
+                    break;
+                }
             }
         }
 
-        // if token not fetched correctly
-        if (token == null) {
-            SecurityContextHolder.clearContext(); // clear the security context
-            System.err.println("No token found in cookies");
-            filterChain.doFilter(request, response);
-            return;
+        if (token != null && !token.isEmpty()) {
+            try {
+                // 4. validate the token
+                TokenClaims claim = jwtUtil.verify(token);
+
+                // 5. fetch UserID and Role from the token (to add it in the authentication object)
+                long userID = claim.userId();
+                ROLE role = claim.role();
+
+                // password null, because not needed for authentication
+                // // this creates authentication object with the userID (who made the request) and role (role of the requester), which can be used for authorization check in the application
+                var auth = new UsernamePasswordAuthenticationToken(
+                    userID,
+                    null,
+                    List.of(
+                        new SimpleGrantedAuthority(
+                            "ROLE_" + role.name().toUpperCase()
+                        )
+                    )
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(auth); // set the authentication object in the security context
+            } catch (JwtException e) {
+                System.err.println("Invalid JWT, error: " + e);
+            }
         }
-
-        // 4. validate the token
-        if (!jwtUtil.validateToken(token)) {
-            SecurityContextHolder.clearContext(); // clear the security context
-            System.err.println("Invalid token found in cookies");
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 5. fetch UserID and Role from the token (to add it in the authentication object)
-        long userID = jwtUtil.getUserID(token);
-        var role = jwtUtil.getRole(token);
-
-        // password null, because not needed for authentication
-        // // this creates authentication object with the userID (who made the request) and role (role of the requester), which can be used for authorization check in the application
-        var auth = new UsernamePasswordAuthenticationToken(
-            userID,
-            null,
-            List.of(
-                new SimpleGrantedAuthority("ROLE_" + role.name().toUpperCase())
-            )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(auth); // set the authentication object in the security context
 
         filterChain.doFilter(request, response); // continue the filter chain
     }

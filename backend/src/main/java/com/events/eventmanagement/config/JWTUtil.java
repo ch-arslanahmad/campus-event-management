@@ -2,6 +2,7 @@ package com.events.eventmanagement.config;
 
 import com.events.eventmanagement.models.User.ROLE;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -49,9 +50,9 @@ public class JWTUtil {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             System.err.println("Error parsing token: " + e.getMessage());
-            throw new RuntimeException("Invalid JWT token", e);
+            throw new InvalidTokenException("Invalid JWT token", e);
         }
     }
 
@@ -59,18 +60,19 @@ public class JWTUtil {
 
     public TokenClaims verify(String token) {
         Claims claims = getClaims(token); // parse + sig + exp, throws if bad
-        return new TokenClaims(
-            Long.valueOf(claims.getSubject()),
-            ROLE.valueOf(claims.get("role", String.class))
-        );
-    }
 
-    public ROLE getRole(String token) {
-        return ROLE.valueOf(getClaims(token).get("role", String.class));
-    }
+        String sub = claims.getSubject();
+        String role = claims.get("role", String.class);
 
-    public long getUserID(String token) {
-        return Long.parseLong(getClaims(token).getSubject());
+        if (sub == null || role == null) {
+            throw new InvalidTokenException("Missing userID or role");
+        }
+
+        try {
+            return new TokenClaims(Long.valueOf(sub), ROLE.valueOf(role));
+        } catch (IllegalArgumentException e) {
+            throw new InvalidTokenException("Malformed claims", e);
+        }
     }
 
     // get the expiration time in seconds
@@ -78,17 +80,15 @@ public class JWTUtil {
         return expiration;
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token);
-            // it throws an exception if the token is invalid.
-            return true;
-        } catch (Exception e) {
-            System.err.println("Error verifying token: " + e.getMessage());
-            return false;
+    // A custom ExceptionHandler for JWT
+    public static class InvalidTokenException extends JwtException {
+
+        public InvalidTokenException(String message) {
+            super(message);
+        }
+
+        public InvalidTokenException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
