@@ -2,6 +2,7 @@ package com.events.eventmanagement.config;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+import com.events.eventmanagement.models.User;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +27,8 @@ public class SecurityConfig {
         http.cors(withDefaults())
                 .csrf(csrf -> csrf.disable()) // disable CSRF protection
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoint (/api/auth/login) + wrong method (GET) → 405 → app hands you
+                        // Public endpoint (/api/auth/login) + wrong method (GET) → 405 → app
+                        // hands you
                         // to /error → /error not in your permit list → falls under
                         // anyRequest().authenticated() → anon blocked → 403.
                         .dispatcherTypeMatchers(DispatcherType.ERROR)
@@ -36,6 +38,13 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/register")
                         .permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/events")
+                        .hasRole(User.ROLE.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/events/**")
+                        .hasRole(User.ROLE.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/events/**")
+                        .hasRole(User.ROLE.ADMIN.name())
                         .anyRequest()
                         .authenticated())
                 // handle exception of unauthorized access (401) and forbidden access (403)
