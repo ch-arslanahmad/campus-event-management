@@ -46,10 +46,7 @@ public class UserService {
         emailIndex.put(user.getEmail(), id); // email mapped to an id
     }
 
-    // testing HARDCODED token
-    String testToken = "dfbdbfdfbdfbdfb"; // note: needs to be removed
-
-    public Map<Long, String> login(User user) {
+    public User login(User user) {
         // if not provided, throw 401 Unauthorized
         if (user.getEmail() == null || user.getPassword() == null) {
             throw new ResponseStatusException(
@@ -59,7 +56,7 @@ public class UserService {
 
         // if provided(find)
         User oldUser = users.get(emailIndex.get(user.getEmail().toLowerCase())); // emailIndex gives index(Long n) from
-                                                                                 // email
+        // email
 
         // if not found or password doesn't match, throw 401 Unauthorized
         if (oldUser == null ||
@@ -70,12 +67,11 @@ public class UserService {
         }
 
         // return the user object if login is successful
-        return Map.of(oldUser.getId(), testToken); // return the user object if login is successful
+        return oldUser;
     }
 
-    public Map<String, User> signup(User user) {
-        String userEmail = user.getEmail().toLowerCase(); // emails stored at lowercase, so normalize the input to
-                                                          // lowercase before claiming it
+    public User signup(User user) {
+        String userEmail = user.getEmail().toLowerCase(); // input normalized
 
         if (userEmail == null || userEmail.isEmpty()) {
             throw new ResponseStatusException(
@@ -85,7 +81,9 @@ public class UserService {
 
         user.setEmail(userEmail);
 
-        // fix 4: server decides the role, whatever the body carried
+        // fix 4: server decides the role, whatever the body carried (because no
+        // role-based access control yet, and we don't want to let a user signup as
+        // admin)
         user.setRole(User.ROLE.student);
 
         // If email available (user in list), returns the existing owner's userId.
@@ -108,6 +106,17 @@ public class UserService {
         }
 
         // password hash never leaves the server (issue #8: passwords never echoed)
-        return Map.of(testToken, user);
+        // callers map this to UserResponse, which has no password field
+        return user;
+    }
+
+    public User getUserById(Long id) {
+        User user = users.get(id);
+        if (user == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "User not found");
+        }
+        return user;
     }
 }
