@@ -6,8 +6,8 @@ import lombok.Data;
 public class User {
 
     public enum ROLE {
-        student,
-        admin, // create events, update/delete own events only (not global admin)
+        STUDENT,
+        ADMIN, // create events, update/delete own events only (not global admin)
     }
 
     private Long id;

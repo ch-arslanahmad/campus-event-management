@@ -30,9 +30,9 @@ public class UserService {
     private static final String PASSWORD_HASH = "$2a$10$DsWbyMlRHFOx4fgUzE1ApehWcPz.2WBV09.CHuYeAAziNwCOvPrsq";
 
     public UserService() {
-        seed(1L, "Campus Admin", "admin@gmail.com", User.ROLE.admin);
-        seed(2L, "Ali Khan", "ali.khan@gmail.com", User.ROLE.student);
-        seed(3L, "Sara Noor", "sara.noor@yahoo.com", User.ROLE.student);
+        seed(1L, "Campus Admin", "admin@gmail.com", User.ROLE.ADMIN);
+        seed(2L, "Ali Khan", "ali.khan@gmail.com", User.ROLE.STUDENT);
+        seed(3L, "Sara Noor", "sara.noor@yahoo.com", User.ROLE.STUDENT);
     }
 
     private void seed(Long id, String name, String email, User.ROLE role) {
@@ -84,7 +84,7 @@ public class UserService {
         // fix 4: server decides the role, whatever the body carried (because no
         // role-based access control yet, and we don't want to let a user signup as
         // admin)
-        user.setRole(User.ROLE.student);
+        user.setRole(User.ROLE.STUDENT);
 
         // If email available (user in list), returns the existing owner's userId.
         // Otherwise creates the user and returns the new userId.

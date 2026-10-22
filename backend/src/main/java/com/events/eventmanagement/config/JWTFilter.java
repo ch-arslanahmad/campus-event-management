@@ -65,7 +65,7 @@ public class JWTFilter extends OncePerRequestFilter {
                     null,
                     List.of(
                         new SimpleGrantedAuthority(
-                            "ROLE_" + role.name().toUpperCase()
+                            "ROLE_" + role.name()
                         )
                     )
                 );
