@@ -94,15 +94,18 @@ public class RegistrationService {
                 .values()
                 .stream()
                 .flatMap(forEvent -> forEvent.values().stream())
-                // ?userId= a student is limited to their own rows
-                .filter(
-                        registration -> !admin || eventId == null || eventId.equals(registration.getEventId()))
-                // only narrows the admin view
+                .filter(registration ->
+                        eventId == null || eventId.equals(registration.getEventId()))
+                // scope first: student = own rows, admin = rows for events it owns
                 .filter(registration -> admin
                         ? callerId.equals(
                                 eventService.ownerOf(registration.getEventId()))
                         : callerId.equals(registration.getUserId()))
-                .sorted((a, b) -> a.getId().compareTo(b.getId())) // sort by id ascending
+                // ?userId= narrows inside that scope, never widens it
+                .filter(registration -> !admin
+                        || userId == null
+                        || userId.equals(registration.getUserId()))
+                .sorted((a, b) -> a.getId().compareTo(b.getId()))
                 .toList();
     }
 
