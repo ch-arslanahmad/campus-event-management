@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/events")
@@ -62,11 +63,12 @@ public class EventController {
 
     @PostMapping
     public ResponseEntity<?> createEvent(
-        @RequestBody @Valid EventRequest requestEvent
+        @RequestBody @Valid EventRequest requestEvent,
+        Authentication auth
     ) {
         // Logic to create a new event in the database
         Event event = requestEvent.to();
-        Long id = eventService.create(event);
+        Long id = eventService.create(event, (Long) auth.getPrincipal());
 
         return ResponseEntity.status(201).body(
             Map.of("message", "Event created successfully", "id", id)
@@ -74,7 +76,10 @@ public class EventController {
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
+    public ResponseEntity<?> deleteEvent(
+        @PathVariable Long id,
+        Authentication auth
+    ) {
         // Logic to delete a specific event by ID from the database
         if (registrationService.hasRegistrations(id)) {
             throw new ResponseStatusException(
@@ -83,7 +88,7 @@ public class EventController {
             );
         }
 
-        eventService.delete(id);
+        eventService.delete(id, (Long) auth.getPrincipal());
 
         return ResponseEntity.noContent().build(); // only returns status code 204 (HTTP code) with no content in the response body
     }
@@ -91,12 +96,17 @@ public class EventController {
     @PutMapping("{id}")
     public ResponseEntity<?> update(
         @PathVariable Long id,
-        @RequestBody @Valid EventRequest requestEvent
+        @RequestBody @Valid EventRequest requestEvent,
+        Authentication auth
     ) {
         // Logic to update a specific event by ID in the database
 
         Event event = requestEvent.to(); // for the updation function
-        Event updatedEvent = eventService.update(id, event);
+        Event updatedEvent = eventService.update(
+            id,
+            event,
+            (Long) auth.getPrincipal()
+        );
 
         return ResponseEntity.status(200).body(
             Map.of(

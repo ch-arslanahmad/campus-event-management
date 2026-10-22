@@ -18,7 +18,9 @@ public record EventResponse(
     Integer capacity,
     Boolean featured,
 
-    @JsonProperty("created_at") String createdAt
+    @JsonProperty("created_at") String createdAt,
+
+    @JsonProperty("created_by") Long createdBy
 ) {
     public static EventResponse from(Event event) {
         return new EventResponse(
@@ -31,7 +33,8 @@ public record EventResponse(
             event.getCategory(),
             event.getCapacity(),
             event.getFeatured(),
-            event.getCreated_at()
+            event.getCreated_at(),
+            event.getCreatedBy()
         );
     }
 

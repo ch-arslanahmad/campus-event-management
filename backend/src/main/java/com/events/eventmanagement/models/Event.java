@@ -6,11 +6,12 @@ import lombok.Data;
 public class Event {
 
     public enum CategoryType {
-        seminar,
-        workshop,
-        sports,
-        competition,
-        conference,
+        SEMINAR,
+        WORKSHOP,
+        SPORTS,
+        COMPETITION,
+        CONFERENCE,
+        CULTURAL,
     }
 
     Long id;
@@ -25,6 +26,9 @@ public class Event {
     // newly added fields
     Boolean featured;
     String created_at;
+
+    // owner of the event, set by the service from the JWT principal
+    Long createdBy;
 
     // default constructor
     public Event(

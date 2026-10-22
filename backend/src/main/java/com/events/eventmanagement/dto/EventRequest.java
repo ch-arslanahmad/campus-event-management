@@ -19,8 +19,8 @@ public record EventRequest(
     String date,
 
     @Pattern(
-        regexp = "^\\d{1,2}:\\d{2} (AM|PM)$",
-        message = "Time must be like 10:00 AM"
+        regexp = "^([01]\\d|2[0-3]):[0-5]\\d$",
+        message = "Time must be HH:mm in 24-hour format, e.g. 14:30"
     )
     @NotBlank(message = "Time is required")
     String time,
