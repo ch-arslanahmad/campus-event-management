@@ -35,14 +35,16 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // 2. check if cookies are null
         if (cookies == null) {
+            SecurityContextHolder.clearContext(); // clear the security context
             System.out.println("No cookies found");
             filterChain.doFilter(request, response);
+            return;
         }
 
         // 3. fetch the JWT token if available
         for (Cookie c : cookies) {
             if ("jwt_token".equals(c.getName())) {
-                System.out.println(c.getName() + " : " + c.getValue());
+                // System.out.println(c.getName() + " : " + c.getValue()); //
                 // check if the cookie name is "access"
                 token = c.getValue(); // get the value of the access cookie
                 break;
@@ -51,21 +53,17 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // if token not fetched correctly
         if (token == null) {
-            filterChain.doFilter(request, response);
+            SecurityContextHolder.clearContext(); // clear the security context
             System.err.println("No token found in cookies");
-            response.sendError(
-                HttpServletResponse.SC_UNAUTHORIZED,
-                "No token found"
-            );
+            filterChain.doFilter(request, response);
+            return;
         }
 
         // 4. validate the token
         if (!jwtUtil.validateToken(token)) {
+            SecurityContextHolder.clearContext(); // clear the security context
             System.err.println("Invalid token found in cookies");
-            response.sendError(
-                HttpServletResponse.SC_UNAUTHORIZED,
-                "Invalid token"
-            );
+            filterChain.doFilter(request, response);
             return;
         }
 

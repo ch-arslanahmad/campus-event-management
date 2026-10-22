@@ -55,12 +55,27 @@ public class JWTUtil {
         }
     }
 
+    public record TokenClaims(Long userId, ROLE role) {}
+
+    public TokenClaims verify(String token) {
+        Claims claims = getClaims(token); // parse + sig + exp, throws if bad
+        return new TokenClaims(
+            Long.valueOf(claims.getSubject()),
+            ROLE.valueOf(claims.get("role", String.class))
+        );
+    }
+
     public ROLE getRole(String token) {
         return ROLE.valueOf(getClaims(token).get("role", String.class));
     }
 
     public long getUserID(String token) {
         return Long.parseLong(getClaims(token).getSubject());
+    }
+
+    // get the expiration time in seconds
+    public long ttlSeconds() {
+        return expiration;
     }
 
     public boolean validateToken(String token) {
