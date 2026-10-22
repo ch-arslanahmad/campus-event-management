@@ -19,8 +19,7 @@ public class RegistrationService {
 
     // eventId -> (userId -> registration), so duplicate and capacity checks
     // touch only one event's map
-    private final Map<Long, Map<Long, Registration>> registrations =
-        new ConcurrentHashMap<>();
+    private final Map<Long, Map<Long, Registration>> registrations = new ConcurrentHashMap<>();
 
     private final AtomicLong idSequence = new AtomicLong(1);
 
@@ -38,19 +37,16 @@ public class RegistrationService {
     // seed rows bypass the duplicate/capacity rules, they are trusted fixtures
     private void seed(Long userId, Long eventId, String registeredAt) {
         Map<Long, Registration> forEvent = registrations.computeIfAbsent(
-            eventId,
-            key -> new ConcurrentHashMap<>()
-        );
+                eventId,
+                key -> new ConcurrentHashMap<>());
 
         forEvent.put(
-            userId,
-            new Registration(
-                idSequence.getAndIncrement(),
                 userId,
-                eventId,
-                registeredAt
-            )
-        );
+                new Registration(
+                        idSequence.getAndIncrement(),
+                        userId,
+                        eventId,
+                        registeredAt));
     }
 
     // post /api/register
@@ -58,52 +54,56 @@ public class RegistrationService {
         Event event = eventService.getById(eventId); // 404 when the event does not exist
 
         Map<Long, Registration> forEvent = registrations.computeIfAbsent(
-            eventId,
-            key -> new ConcurrentHashMap<>()
-        );
+                eventId,
+                key -> new ConcurrentHashMap<>());
 
         // duplicate check + capacity check + insert in one atomic compute(),
         // so two parallel requests cannot both pass the capacity check
         forEvent.compute(userId, (key, existing) -> {
             if (existing != null) {
                 throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "You are already registered for this event."
-                );
+                        HttpStatus.CONFLICT,
+                        "You are already registered for this event.");
             }
 
             if (forEvent.size() >= event.getCapacity()) {
                 throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Event is full."
-                );
+                        HttpStatus.CONFLICT,
+                        "Event is full.");
             }
 
             return new Registration(
-                idSequence.getAndIncrement(),
-                userId,
-                eventId,
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()
-            );
+                    idSequence.getAndIncrement(),
+                    userId,
+                    eventId,
+                    LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString());
         });
 
         return forEvent.get(userId);
     }
 
-    // get /api/registrations, optional ?eventId= and ?userId=
-    public List<Registration> list(Long eventId, Long userId) {
+    // get /api/registrations: the scope comes from the caller's identity,
+    // a student sees their own rows, an admin sees rows for events it created
+    // (admins are event owners).
+    public List<Registration> list(
+            Long callerId,
+            boolean admin,
+            Long eventId,
+            Long userId) {
         return registrations
-            .values()
-            .stream()
-            .flatMap(forEvent -> forEvent.values().stream())
-            .filter(registration ->
-                eventId == null || eventId.equals(registration.getEventId())
-            )
-            .filter(registration ->
-                userId == null || userId.equals(registration.getUserId())
-            )
-            .sorted((a, b) -> a.getId().compareTo(b.getId()))
-            .toList();
+                .values()
+                .stream()
+                .flatMap(forEvent -> forEvent.values().stream())
+                // ?userId= a student is limited to their own rows
+                .filter(
+                        registration -> !admin || eventId == null || eventId.equals(registration.getEventId()))
+                // only narrows the admin view
+                .filter(registration -> admin
+                        ? callerId.equals(
+                                eventService.ownerOf(registration.getEventId()))
+                        : callerId.equals(registration.getUserId()))
+                .sorted((a, b) -> a.getId().compareTo(b.getId())) // sort by id ascending
+                .toList();
     }
 
     // used by DELETE /api/events/{id}

@@ -22,8 +22,8 @@ public class UserService {
     // would let two same-email signups both pass the check and both insert.
     private final Map<String, Long> emailIndex = new ConcurrentHashMap<>(); // email mapping to user id
 
-    // server-assigned ids, starts after the 3 seeded users below
-    private final AtomicLong idSequence = new AtomicLong(4);
+    // server-assigned ids, starts after the 4 seeded users below
+    private final AtomicLong idSequence = new AtomicLong(5);
 
     // One shared BCrypt hash for all demo accounts.
     // demo password: demo1234, change on real signup
@@ -33,6 +33,7 @@ public class UserService {
         seed(1L, "Campus Admin", "admin@gmail.com", User.ROLE.ADMIN);
         seed(2L, "Ali Khan", "ali.khan@gmail.com", User.ROLE.STUDENT);
         seed(3L, "Sara Noor", "sara.noor@yahoo.com", User.ROLE.STUDENT);
+        seed(4L, "Events Admin", "admin2@gmail.com", User.ROLE.ADMIN);
     }
 
     private void seed(Long id, String name, String email, User.ROLE role) {
@@ -54,9 +55,9 @@ public class UserService {
                     "Invalid email or password");
         }
 
-        // if provided(find)
-        User oldUser = users.get(emailIndex.get(user.getEmail().toLowerCase())); // emailIndex gives index(Long n) from
-        // email
+        // if provided(find). emailIndex may return null (unknown email), and
+        Long userId = emailIndex.get(user.getEmail().toLowerCase());
+        User oldUser = userId == null ? null : users.get(userId); // ConcurrentHashMap.get(null) throws, so resolve the id first
 
         // if not found or password doesn't match, throw 401 Unauthorized
         if (oldUser == null ||

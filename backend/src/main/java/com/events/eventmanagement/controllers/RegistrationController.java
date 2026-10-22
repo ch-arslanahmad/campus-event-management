@@ -52,9 +52,20 @@ public class RegistrationController {
     @GetMapping("/api/registrations")
     public ResponseEntity<List<RegistrationResponse>> list(
         @RequestParam(name = "eventId", required = false) Long eventId,
-        @RequestParam(name = "userId", required = false) Long userId
+        @RequestParam(name = "userId", required = false) Long userId,
+        Authentication auth
     ) {
+        Long callerId = (Long) auth.getPrincipal();
+        boolean admin = auth
+            .getAuthorities()
+            .stream()
+            .anyMatch(authority ->
+                "ROLE_ADMIN".equals(authority.getAuthority())
+            );
+
         List<Registration> registrations = registrationService.list(
+            callerId,
+            admin,
             eventId,
             userId
         );
