@@ -16,7 +16,9 @@ public record RegistrationResponse(
             registration.getId(),
             registration.getUserId(),
             registration.getEventId(),
-            registration.getRegisteredAt()
+            registration.getRegisteredAt() == null
+                ? null
+                : registration.getRegisteredAt().toString()
         );
     }
 
