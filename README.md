@@ -114,7 +114,7 @@ Auth is cookie-based (one httpOnly `jwt_token` cookie, no token in JSON). Design
 
 ### Example Requests
 
-_Not yet available — backend not implemented. Will be filled with real requests/responses once APIs are built (subject to change)._
+_Request/response examples are still being collected. Demo accounts, database setup and how to run the backend are in [documentation/SETUP.md](documentation/SETUP.md)._
 
 ## Database Schema
 
