@@ -3,7 +3,7 @@
 -- Campus Event Management System
 -- Database Schema
 -- Issue #5
--- =========ss============================================
+-- =====================================================
 
 -- Create the database if it does not exist.
 CREATE DATABASE IF NOT EXISTS campus_events;
@@ -43,14 +43,17 @@ CREATE TABLE IF NOT EXISTS events (
     capacity INT NOT NULL,
     featured BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    created_by BIGINT,
+    created_by BIGINT NOT NULL,
 
     CONSTRAINT fk_events_created_by
         FOREIGN KEY (created_by)
         REFERENCES users(id),
 
     CONSTRAINT chk_events_capacity
-        CHECK (capacity > 0)
+        CHECK (capacity > 0),
+
+    CONSTRAINT chk_events_category
+        CHECK (category IN ('SEMINAR','WORKSHOP','SPORTS','COMPETITION','CONFERENCE','CULTURAL'))
 );
 
 
