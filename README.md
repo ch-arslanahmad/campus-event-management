@@ -108,6 +108,8 @@ Learn about the development flow in the [CONTRIBUTING.md](CONTRIBUTING.md)
 - `POST /api/auth/logout` - Clear auth cookies
 - `GET /api/auth/me` - Current user, read from cookie
 
+All list endpoints are paginated: `?page=` (0-based, default `0`) and `?size=` (default `20`, max `100`); they answer with `{content, page, size, totalElements, totalPages, first, last}`. Rules and rationale: [ADR-0003](documentation/adr/0003-server-side-pagination.md).
+
 Better explaination would be in its (to be created ) API documentation file.
 
 Auth is cookie-based (one httpOnly `jwt_token` cookie, no token in JSON). Design and rationale: [documentation/JWT-STORAGE.md](documentation/JWT-STORAGE.md) and [ADR-0002](documentation/adr/0002-jwt-in-httponly-cookies.md).
