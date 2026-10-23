@@ -112,8 +112,10 @@ public class EventController {
             Map.of(
                 "message",
                 "Event updated successfully",
+                // same shape as GET /api/events/{id}: the raw entity would expose
+                // createdAt/createdBy and a time with seconds
                 "event",
-                updatedEvent
+                EventResponse.from(updatedEvent)
             )
         );
     }
