@@ -27,8 +27,11 @@ campus-event-management/
 │       └── dto/
 ├── documentation/
 │   ├── SETUP.md
+│   ├── API.md
+│   ├── JWT-STORAGE.md
 │   └── adr/
-│       └── 0001-spring-boot-backend.md
+│       ├── 0001-spring-boot-backend.md
+│       └── 0002-jwt-in-httponly-cookies.md
 ├── screenshots/
 ├── README.md
 ├── CONTRIBUTING.md
@@ -93,15 +96,21 @@ Learn about the development flow in the [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## API Endpoints
 
-- `GET /api/events` - List all events
-- `GET /api/events/:id` - Get event details
+- `GET /api/events` - List all events (auth)
+- `GET /api/events/:id` - Get event details (auth)
 - `POST /api/events` - Create event (admin)
-- `PUT /api/events/:id` - Update event (admin)
-- `DELETE /api/events/:id` - Delete event (admin)
-- `POST /api/register` - Register for event
-- `GET /api/registrations` - List registrations
-- `POST /api/login` - User login
-- `POST /api/signup` - User registration
+- `PUT /api/events/:id` - Update event (admin, owner only)
+- `DELETE /api/events/:id` - Delete event (admin, owner only)
+- `POST /api/register` - Register for event (auth)
+- `GET /api/registrations` - List registrations (auth, scoped to caller; `?eventId=` / `?userId=` narrow)
+- `POST /api/auth/login` - User login (sets auth cookies)
+- `POST /api/auth/register` - User registration (sets auth cookies)
+- `POST /api/auth/logout` - Clear auth cookies
+- `GET /api/auth/me` - Current user, read from cookie
+
+Better explaination would be in its (to be created ) API documentation file.
+
+Auth is cookie-based (one httpOnly `jwt_token` cookie, no token in JSON). Design and rationale: [documentation/JWT-STORAGE.md](documentation/JWT-STORAGE.md) and [ADR-0002](documentation/adr/0002-jwt-in-httponly-cookies.md).
 
 ### Example Requests
 
@@ -118,6 +127,11 @@ email
 password
 role (STUDENT, ADMIN)
 ```
+
+Roles:
+
+- `STUDENT` — views events, registers for them. The server forces this at signup; the request never picks its own role.
+- `ADMIN` — creates events; updates/deletes **only events it created** (checked via `created_by`). No global admin. Admin accounts come from seed data, not from public signup.
 
 ### Events Table
 
