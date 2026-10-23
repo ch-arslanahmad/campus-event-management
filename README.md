@@ -103,8 +103,8 @@ Learn about the development flow in the [CONTRIBUTING.md](CONTRIBUTING.md)
 - `DELETE /api/events/:id` - Delete event (admin, owner only)
 - `POST /api/register` - Register for event (auth)
 - `GET /api/registrations` - List registrations (auth, scoped to caller; `?eventId=` / `?userId=` narrow)
-- `POST /api/auth/login` - User login (sets auth cookies)
-- `POST /api/auth/register` - User registration (sets auth cookies)
+- `POST /api/auth/login` - User login (sets the auth cookie). The brief's path, `POST /api/login` (§6), works too.
+- `POST /api/auth/register` - User signup (sets the auth cookie). The brief's path, `POST /api/signup` (§6), works too.
 - `POST /api/auth/logout` - Clear auth cookies
 - `GET /api/auth/me` - Current user, read from cookie
 

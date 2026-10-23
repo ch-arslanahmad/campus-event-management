@@ -36,7 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/login",
-                                "/api/auth/register")
+                                "/api/auth/register",
+                                // the brief lists these two paths (§6)
+                                "/api/login",
+                                "/api/signup")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/events")
