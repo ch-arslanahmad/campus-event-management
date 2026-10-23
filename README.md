@@ -132,7 +132,7 @@ role (STUDENT, ADMIN)
 
 Roles:
 
-- `STUDENT` — views events, registers for them. The server forces this at signup; the request never picks its own role.
+- `STUDENT` — views events, registers for them. The server assigns this at signup; the request body cannot choose a role.
 - `ADMIN` — creates events; updates/deletes **only events it created** (checked via `created_by`). No global admin. Admin accounts come from seed data, not from public signup.
 
 ### Events Table

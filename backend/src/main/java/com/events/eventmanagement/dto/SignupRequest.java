@@ -1,12 +1,12 @@
 package com.events.eventmanagement.dto;
 
 import com.events.eventmanagement.models.User;
-import com.events.eventmanagement.models.User.ROLE;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+// No role field on purpose: signup always creates a STUDENT (UserService decides),
+// so a role sent in the body was only ever discarded.
 public record SignupRequest(
     @NotBlank(message = "Name is required") String name,
 
@@ -20,9 +20,7 @@ public record SignupRequest(
 
     @Size(min = 8, max = 72, message = "Password must be 8-72 characters")
     @NotBlank(message = "Password is required")
-    String password,
-
-    @NotNull(message = "Role must be provided") ROLE role
+    String password
 ) {
     public User to() {
         return new User(
@@ -30,7 +28,7 @@ public record SignupRequest(
             this.name,
             this.email,
             this.password,
-            this.role
+            null // role, assigned by the service
         );
     }
 }
