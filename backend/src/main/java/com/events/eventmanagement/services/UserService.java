@@ -1,123 +1,98 @@
 package com.events.eventmanagement.services;
 
 import com.events.eventmanagement.models.User;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import com.events.eventmanagement.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserService {
 
+    private final UserRepository userRepository;
+
     BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    // id -> User (the store, same pattern as EventService's ConcurrentHashMap)
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
-
-    // email -> id : the unique-email guard. signup() claims an email via
-    // computeIfAbsent (atomic) instead of scanning `users` first, a scan-then-put
-    // would let two same-email signups both pass the check and both insert.
-    private final Map<String, Long> emailIndex = new ConcurrentHashMap<>(); // email mapping to user id
-
-    // server-assigned ids, starts after the 4 seeded users below
-    private final AtomicLong idSequence = new AtomicLong(5);
-
-    // One shared BCrypt hash for all demo accounts.
-    // demo password: demo1234, change on real signup
-    private static final String PASSWORD_HASH = "$2a$10$DsWbyMlRHFOx4fgUzE1ApehWcPz.2WBV09.CHuYeAAziNwCOvPrsq";
-
-    public UserService() {
-        seed(1L, "Campus Admin", "admin@gmail.com", User.ROLE.ADMIN);
-        seed(2L, "Ali Khan", "ali.khan@gmail.com", User.ROLE.STUDENT);
-        seed(3L, "Sara Noor", "sara.noor@yahoo.com", User.ROLE.STUDENT);
-        seed(4L, "Events Admin", "admin2@gmail.com", User.ROLE.ADMIN);
-    }
-
-    private void seed(Long id, String name, String email, User.ROLE role) {
-        User user = new User(
-                id,
-                name,
-                email.toLowerCase(),
-                PASSWORD_HASH,
-                role);
-        users.put(id, user); // users map, id key
-        emailIndex.put(user.getEmail(), id); // email mapped to an id
+    UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     public User login(User user) {
         // if not provided, throw 401 Unauthorized
         if (user.getEmail() == null || user.getPassword() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Invalid email or password");
+            throw unauthorized();
         }
 
-        // if provided(find). emailIndex may return null (unknown email), and
-        Long userId = emailIndex.get(user.getEmail().toLowerCase());
-        User oldUser = userId == null ? null : users.get(userId); // ConcurrentHashMap.get(null) throws, so resolve the id first
+        User oldUser = userRepository
+            .findByEmail(user.getEmail().toLowerCase())
+            .orElse(null);
 
         // if not found or password doesn't match, throw 401 Unauthorized
-        if (oldUser == null ||
-                !passwordEncoder.matches(user.getPassword(), oldUser.getPassword())) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Invalid email or password");
+        // (same message for both, no user enumeration)
+        if (
+            oldUser == null ||
+            !passwordEncoder.matches(
+                user.getPassword(),
+                oldUser.getPassword()
+            )
+        ) {
+            throw unauthorized();
         }
 
         // return the user object if login is successful
         return oldUser;
     }
 
+    @Transactional
     public User signup(User user) {
-        String userEmail = user.getEmail().toLowerCase(); // input normalized
-
-        if (userEmail == null || userEmail.isEmpty()) {
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Email is required");
+                HttpStatus.BAD_REQUEST,
+                "Email is required"
+            );
         }
 
+        String userEmail = user.getEmail().toLowerCase(); // input normalized
         user.setEmail(userEmail);
 
-        // fix 4: server decides the role, whatever the body carried (because no
-        // role-based access control yet, and we don't want to let a user signup as
-        // admin)
+        // the server decides the role, whatever the body carried (a signup can
+        // never mint an admin)
         user.setRole(User.ROLE.STUDENT);
 
-        // If email available (user in list), returns the existing owner's userId.
-        // Otherwise creates the user and returns the new userId.
-        Long claimed = emailIndex.computeIfAbsent(userEmail, key -> {
-            user.setId(idSequence.getAndIncrement()); // assign a new id
-            user.setPassword(passwordEncoder.encode(user.getPassword())); // hash the password
-            users.put(user.getId(), user); // add to users map
-            return user.getId(); // claim result: our id
-        });
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // if the id created/fetched is not ours, then someone else owns this email (409
-        // conflict)
-        if (!claimed.equals(user.getId())) {
-            // we didn't write, someone else owns this email (409 conflict), solves
+        try {
+            // saveAndFlush so the UNIQUE(email) index rejects duplicates here,
+            // inside the catch (not at transaction commit)
+            return userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            // someone else owns this email (409 conflict), also solves
             // concurrent signup
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Email already registered");
+                HttpStatus.CONFLICT,
+                "Email already registered"
+            );
         }
-
-        // password hash never leaves the server (issue #8: passwords never echoed)
-        // callers map this to UserResponse, which has no password field
-        return user;
     }
 
     public User getUserById(Long id) {
-        User user = users.get(id);
-        if (user == null) {
-            throw new ResponseStatusException(
+        return userRepository
+            .findById(id)
+            .orElseThrow(() ->
+                new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "User not found");
-        }
-        return user;
+                    "User not found"
+                )
+            );
+    }
+
+    private ResponseStatusException unauthorized() {
+        return new ResponseStatusException(
+            HttpStatus.UNAUTHORIZED,
+            "Invalid email or password"
+        );
     }
 }
