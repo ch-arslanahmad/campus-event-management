@@ -47,11 +47,6 @@ public class EventService {
         return eventRepository.findByCategory(parsed, pageable);
     }
 
-    // event exists (helper method)
-    boolean isExists(Long id) {
-        return eventRepository.existsById(id);
-    }
-
     // post /api/events
     @Transactional
     public Long create(Event event, Long ownerId) {
@@ -75,14 +70,6 @@ public class EventService {
         eventRepository.delete(existing);
 
         return true;
-    }
-
-    // owner of an event, null when it does not exist (used by registration scoping)
-    public Long ownerOf(Long eventId) {
-        return eventRepository
-            .findById(eventId)
-            .map(Event::getCreatedBy)
-            .orElse(null);
     }
 
     // an admin may only change events it created
