@@ -2,12 +2,15 @@ package com.events.eventmanagement.controllers;
 
 import com.events.eventmanagement.dto.EventRequest;
 import com.events.eventmanagement.dto.EventResponse;
+import com.events.eventmanagement.dto.PageQuery;
+import com.events.eventmanagement.dto.PageResponse;
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.services.EventService;
 import com.events.eventmanagement.services.RegistrationService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,17 +41,23 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponse>> getAllEvents(
-        @RequestParam(name = "category", required = false) String category
+    public ResponseEntity<PageResponse<EventResponse>> getAllEvents(
+        @RequestParam(name = "category", required = false) String category,
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "20") int size
     ) {
-        List<Event> events_list =
+        Pageable pageable = PageQuery.toPageable(page, size);
+
+        Page<Event> events =
             category != null && !category.isBlank()
-                ? eventService.listByCategory(category)
-                : eventService.list();
+                ? eventService.listByCategory(category, pageable)
+                : eventService.list(pageable);
 
-        List<EventResponse> events = EventResponse.fromList(events_list);
-
-        return ResponseEntity.status(200).body(events);
+        // map() keeps the paging metadata, so the envelope describes the whole
+        // filtered set, not just this page
+        return ResponseEntity.ok(
+            PageResponse.of(events.map(EventResponse::from))
+        );
     }
 
     @GetMapping("{id}")
@@ -112,8 +121,10 @@ public class EventController {
             Map.of(
                 "message",
                 "Event updated successfully",
+                // same shape as GET /api/events/{id}: the raw entity would expose
+                // createdAt/createdBy and a time with seconds
                 "event",
-                updatedEvent
+                EventResponse.from(updatedEvent)
             )
         );
     }

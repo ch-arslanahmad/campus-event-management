@@ -36,7 +36,18 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/login",
-                                "/api/auth/register")
+                                "/api/auth/register",
+                                // the brief lists these two paths (§6)
+                                "/api/login",
+                                "/api/signup")
+                        .permitAll()
+
+                        // browsing events needs no account: students view events, and
+                        // the frontend lists them before anyone logs in
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/events",
+                                "/api/events/**")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/events")

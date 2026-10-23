@@ -96,17 +96,19 @@ Learn about the development flow in the [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## API Endpoints
 
-- `GET /api/events` - List all events (auth)
-- `GET /api/events/:id` - Get event details (auth)
+- `GET /api/events` - List all events (public)
+- `GET /api/events/:id` - Get event details (public)
 - `POST /api/events` - Create event (admin)
 - `PUT /api/events/:id` - Update event (admin, owner only)
 - `DELETE /api/events/:id` - Delete event (admin, owner only)
 - `POST /api/register` - Register for event (auth)
 - `GET /api/registrations` - List registrations (auth, scoped to caller; `?eventId=` / `?userId=` narrow)
-- `POST /api/auth/login` - User login (sets auth cookies)
-- `POST /api/auth/register` - User registration (sets auth cookies)
+- `POST /api/auth/login` - User login (sets the auth cookie). The brief's path, `POST /api/login` (§6), works too.
+- `POST /api/auth/register` - User signup (sets the auth cookie). The brief's path, `POST /api/signup` (§6), works too.
 - `POST /api/auth/logout` - Clear auth cookies
 - `GET /api/auth/me` - Current user, read from cookie
+
+All list endpoints are paginated: `?page=` (0-based, default `0`) and `?size=` (default `20`, max `100`); they answer with `{content, page, size, totalElements, totalPages, first, last}`. Rules and rationale: [ADR-0003](documentation/adr/0003-server-side-pagination.md).
 
 Better explaination would be in its (to be created ) API documentation file.
 
@@ -114,7 +116,7 @@ Auth is cookie-based (one httpOnly `jwt_token` cookie, no token in JSON). Design
 
 ### Example Requests
 
-_Not yet available — backend not implemented. Will be filled with real requests/responses once APIs are built (subject to change)._
+_Request/response examples are still being collected. Demo accounts, database setup and how to run the backend are in [documentation/SETUP.md](documentation/SETUP.md)._
 
 ## Database Schema
 
@@ -130,7 +132,7 @@ role (STUDENT, ADMIN)
 
 Roles:
 
-- `STUDENT` — views events, registers for them. The server forces this at signup; the request never picks its own role.
+- `STUDENT` — views events, registers for them. The server assigns this at signup; the request body cannot choose a role.
 - `ADMIN` — creates events; updates/deletes **only events it created** (checked via `created_by`). No global admin. Admin accounts come from seed data, not from public signup.
 
 ### Events Table

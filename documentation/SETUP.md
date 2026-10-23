@@ -18,35 +18,66 @@ If not cloned yet, clone first (see [README](../README.md) Installation), then:
 
 ```shell
 cd backend
-# to be added further
 ```
+
+Java 21 and the Maven wrapper (`./mvnw`) are all you need.
 
 ### 2. Configure Database
 
-Create MySQL database:
+The backend talks to MySQL. Create the database and the application user once,
+as an admin:
 
-```
+```sql
 CREATE DATABASE campus_events;
+CREATE USER 'campus'@'localhost' IDENTIFIED BY 'campus123';
+GRANT ALL PRIVILEGES ON campus_events.* TO 'campus'@'localhost';
 ```
 
-Update `src/main/resources/application.properties`:
+Load the schema and the demo data (both live in `backend/database/`):
+
+```shell
+mysql -u campus -p campus_events < backend/database/schema.sql
+mysql -u campus -p campus_events < backend/database/seed.sql
+```
+
+`seed.sql` loads 100 users, 555 events and 1000 registrations, and is
+re-runnable (it clears the three tables first). `schema.sql` is not: it uses
+`CREATE TABLE IF NOT EXISTS`, so after a schema change drop the database and
+reload both files.
+
+The connection defaults live in `src/main/resources/application.properties`:
 
 ```
 spring.datasource.url=jdbc:mysql://localhost:3306/campus_events
-spring.datasource.username=root
-spring.datasource.password=your_password
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+spring.datasource.username=campus
+spring.datasource.password=campus123
+spring.jpa.hibernate.ddl-auto=none
 ```
+
+`APP_DB_URL`, `APP_DB_USER`, `APP_DB_PASSWORD` and `APP_DB_DIALECT` override
+them. `ddl-auto=none` is deliberate: `schema.sql` owns the schema, Hibernate
+never runs DDL.
 
 ### 3. Build and Run
 
 ```
-mvn clean install
-mvn spring-boot:run
+./mvnw clean install
+./mvnw spring-boot:run
 ```
 
 Backend runs on `http://localhost:8080`
+
+### 4. Demo Accounts
+
+Every seeded account uses the password `Demo@12345` (stated in `seed.sql`):
+
+| Role | Email |
+|---|---|
+| Admin | `ayesha.khan.admin@gmail.com` |
+| Admin | `hamza.malik.admin@outlook.com` |
+| Student | `sidra.butt@gmail.com` |
+
+Public signup always creates a `STUDENT`; admin accounts come from the seed.
 
 ## Frontend to Backend Connection
 
@@ -76,6 +107,11 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full workflow (issue → branc
 - Ensure MySQL server is running
 - Check database credentials in `application.properties`
 - Verify database exists
+- Verify the schema and seed are loaded: `mysql -u campus -p campus_events < backend/database/schema.sql`
+
+**Startup fails with "Unable to determine Dialect":**
+
+- Hibernate's dialect detection reads MySQL 8 metadata that the server may not expose, so the dialect is pinned to `MySQLDialect` in `application.properties`. Set `APP_DB_DIALECT` to another dialect when the server identifies itself differently.
 
 **Port Already in Use:**
 

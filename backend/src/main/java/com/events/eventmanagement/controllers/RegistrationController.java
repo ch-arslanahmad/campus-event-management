@@ -1,12 +1,15 @@
 package com.events.eventmanagement.controllers;
 
+import com.events.eventmanagement.dto.PageQuery;
+import com.events.eventmanagement.dto.PageResponse;
 import com.events.eventmanagement.dto.RegisterRequest;
 import com.events.eventmanagement.dto.RegistrationResponse;
 import com.events.eventmanagement.models.Registration;
 import com.events.eventmanagement.services.RegistrationService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,11 +51,14 @@ public class RegistrationController {
         );
     }
 
-    // get /api/registrations, optional ?eventId= and ?userId=
+    // get /api/registrations, optional ?eventId= and ?userId=, paged with
+    // ?page= / ?size= (ADR-0003)
     @GetMapping("/api/registrations")
-    public ResponseEntity<List<RegistrationResponse>> list(
+    public ResponseEntity<PageResponse<RegistrationResponse>> list(
         @RequestParam(name = "eventId", required = false) Long eventId,
         @RequestParam(name = "userId", required = false) Long userId,
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "20") int size,
         Authentication auth
     ) {
         Long callerId = (Long) auth.getPrincipal();
@@ -63,13 +69,16 @@ public class RegistrationController {
                 "ROLE_ADMIN".equals(authority.getAuthority())
             );
 
-        List<Registration> registrations = registrationService.list(
+        Page<Registration> registrations = registrationService.list(
             callerId,
             admin,
             eventId,
-            userId
+            userId,
+            PageQuery.toPageable(page, size)
         );
 
-        return ResponseEntity.ok(RegistrationResponse.fromList(registrations));
+        return ResponseEntity.ok(
+            PageResponse.of(registrations.map(RegistrationResponse::from))
+        );
     }
 }

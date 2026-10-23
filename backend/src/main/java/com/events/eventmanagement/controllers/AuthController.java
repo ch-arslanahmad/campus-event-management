@@ -18,11 +18,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/*
+ * Endpoints carry their full paths: /api/auth/* is our namespace, while
+ * /api/login and /api/signup are the paths the brief lists (§6). A class-level
+ * @RequestMapping would prefix both and make the second pair unreachable.
+ */
 @RestController
-@RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserService userService;
@@ -64,7 +67,7 @@ public class AuthController {
 
     // POST /api/auth/login: verify credentials, mint the access JWT, deliver it as
     // an httpOnly cookie
-    @PostMapping("/login")
+    @PostMapping({ "/api/auth/login", "/api/login" })
     public ResponseEntity<UserResponse> login(
             @RequestBody @Valid LoginRequest request) {
         User user = userService.login(request.to());
@@ -77,7 +80,7 @@ public class AuthController {
     }
 
     // POST /api/auth/register: 201 + same cookie, still no token in the body
-    @PostMapping("/register")
+    @PostMapping({ "/api/auth/register", "/api/signup" })
     public ResponseEntity<UserResponse> register(
             @RequestBody @Valid SignupRequest request) {
         User user = userService.signup(request.to());
@@ -93,7 +96,7 @@ public class AuthController {
 
     // POST /api/auth/logout: clear the cookie. Same name + path, Max-Age 0 is what
     // deletes it
-    @PostMapping("/logout")
+    @PostMapping("/api/auth/logout")
     public ResponseEntity<?> logout() {
         ResponseCookie dead = sessionCookie("", 0); // Max-Age 0 = delete
 
@@ -104,7 +107,7 @@ public class AuthController {
 
     // GET /api/auth/me: identity comes from the cookie, JWTFilter puts the user id
     // in the principal
-    @GetMapping("/me")
+    @GetMapping("/api/auth/me")
     public ResponseEntity<UserResponse> me(Authentication auth) {
         User user = userService.getUserById((Long) auth.getPrincipal());
 
