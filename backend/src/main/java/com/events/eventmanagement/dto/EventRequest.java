@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record EventRequest(
     @NotBlank(message = "Title is required") String title,
@@ -43,17 +45,19 @@ public record EventRequest(
     }
 
     public Event to() {
-        return new Event(
-            null, // id
-            this.title,
-            this.description,
-            this.date,
-            this.time,
-            this.location,
-            this.category,
-            this.capacity,
-            this.featured,
-            null // created_at
-        );
+        Event event = new Event();
+
+        event.setTitle(this.title);
+        event.setDescription(this.description);
+        // @Pattern already pinned the wire format, so parsing cannot fail here
+        event.setDate(LocalDate.parse(this.date));
+        event.setTime(LocalTime.parse(this.time));
+        event.setLocation(this.location);
+        event.setCategory(this.category);
+        event.setCapacity(this.capacity);
+        event.setFeatured(this.featured);
+        // id, created_at and created_by are assigned by the service/database
+
+        return event;
     }
 }
