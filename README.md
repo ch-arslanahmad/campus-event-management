@@ -96,8 +96,8 @@ Learn about the development flow in the [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## API Endpoints
 
-- `GET /api/events` - List all events (auth)
-- `GET /api/events/:id` - Get event details (auth)
+- `GET /api/events` - List all events (public)
+- `GET /api/events/:id` - Get event details (public)
 - `POST /api/events` - Create event (admin)
 - `PUT /api/events/:id` - Update event (admin, owner only)
 - `DELETE /api/events/:id` - Delete event (admin, owner only)

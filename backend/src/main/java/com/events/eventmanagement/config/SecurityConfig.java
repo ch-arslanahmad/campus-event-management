@@ -42,6 +42,14 @@ public class SecurityConfig {
                                 "/api/signup")
                         .permitAll()
 
+                        // browsing events needs no account: students view events, and
+                        // the frontend lists them before anyone logs in
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/events",
+                                "/api/events/**")
+                        .permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/api/events")
                         .hasRole(User.ROLE.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/api/events/**")
