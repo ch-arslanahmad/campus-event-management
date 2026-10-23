@@ -4,9 +4,6 @@ import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public record EventResponse(
     Long id,
@@ -44,16 +41,5 @@ public record EventResponse(
                 : CREATED_AT_FORMAT.format(event.getCreatedAt()),
             event.getCreatedBy()
         );
-    }
-
-    public static List<EventResponse> fromList(List<Event> events) {
-        if (events == null || events.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return events
-            .stream()
-            .map(event -> from(event))
-            .collect(Collectors.toList());
     }
 }

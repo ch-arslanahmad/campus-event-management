@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,12 +82,14 @@ public class RegistrationService {
 
     // get /api/registrations: the scope comes from the caller's identity,
     // a student sees their own rows, an admin sees rows for events it created
-    // (admins are event owners).
-    public List<Registration> list(
+    // (admins are event owners). The scope lives in the query, so totalElements
+    // counts only the rows the caller may see (ADR-0003).
+    public Page<Registration> list(
         Long callerId,
         boolean admin,
         Long eventId,
-        Long userId
+        Long userId,
+        Pageable pageable
     ) {
         if (admin) {
             List<Long> ownedEventIds = eventRepository.findIdsByCreatedBy(
@@ -93,34 +97,37 @@ public class RegistrationService {
             );
 
             if (ownedEventIds.isEmpty()) {
-                return List.of();
+                return Page.empty(pageable);
             }
 
             // ?eventId= narrows inside the owned set, never widens it
             if (eventId != null) {
                 if (!ownedEventIds.contains(eventId)) {
-                    return List.of();
+                    return Page.empty(pageable);
                 }
 
                 ownedEventIds = List.of(eventId);
             }
 
             return userId == null
-                ? registrationRepository.findByEventIdInOrderByIdAsc(
-                      ownedEventIds
-                  )
-                : registrationRepository.findByEventIdInAndUserIdOrderByIdAsc(
+                ? registrationRepository.findByEventIdIn(
                       ownedEventIds,
-                      userId
+                      pageable
+                  )
+                : registrationRepository.findByEventIdInAndUserId(
+                      ownedEventIds,
+                      userId,
+                      pageable
                   );
         }
 
         // student: own rows only, ?userId= is ignored (it can never widen scope)
         return eventId == null
-            ? registrationRepository.findByUserIdOrderByIdAsc(callerId)
-            : registrationRepository.findByUserIdAndEventIdOrderByIdAsc(
+            ? registrationRepository.findByUserId(callerId, pageable)
+            : registrationRepository.findByUserIdAndEventId(
                   callerId,
-                  eventId
+                  eventId,
+                  pageable
               );
     }
 

@@ -5,8 +5,8 @@ import com.events.eventmanagement.models.Event.CategoryType;
 import com.events.eventmanagement.repository.EventRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,10 +21,10 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
-    // Get all events, /api/events. Sorted by id so paging wraps it consistently
-    // (ADR-0003); the DB store made the old ConcurrentHashMap seeds unnecessary.
-    public List<Event> list() {
-        return eventRepository.findAll(Sort.by("id"));
+    // Get all events, /api/events. The caller passes page/size (and the sort,
+    // ADR-0003); the DB store made the old ConcurrentHashMap seeds unnecessary.
+    public Page<Event> list(Pageable pageable) {
+        return eventRepository.findAll(pageable);
     }
 
     public Event getById(Long id) {
@@ -34,17 +34,17 @@ public class EventService {
     }
 
     // Get events by category, /api/events/?category=
-    // An unknown category matched nothing before, so it still returns an empty list.
-    public List<Event> listByCategory(String category) {
+    // An unknown category matched nothing before, so it still returns an empty page.
+    public Page<Event> listByCategory(String category, Pageable pageable) {
         CategoryType parsed;
 
         try {
             parsed = CategoryType.valueOf(category.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return List.of();
+            return Page.empty(pageable);
         }
 
-        return eventRepository.findByCategory(parsed, Sort.by("id"));
+        return eventRepository.findByCategory(parsed, pageable);
     }
 
     // event exists (helper method)

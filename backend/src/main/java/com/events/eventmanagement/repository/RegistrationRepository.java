@@ -2,7 +2,8 @@ package com.events.eventmanagement.repository;
 
 import com.events.eventmanagement.models.Registration;
 import java.util.Collection;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
@@ -13,11 +14,24 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     long countByEventId(Long eventId);
 
-    List<Registration> findByUserIdOrderByIdAsc(Long userId);
+    // paged variants: the authorization scope is applied by the query, so
+    // totalElements counts only the rows the caller may see (ADR-0003)
+    Page<Registration> findByUserId(Long userId, Pageable pageable);
 
-    List<Registration> findByUserIdAndEventIdOrderByIdAsc(Long userId, Long eventId);
+    Page<Registration> findByUserIdAndEventId(
+        Long userId,
+        Long eventId,
+        Pageable pageable
+    );
 
-    List<Registration> findByEventIdInOrderByIdAsc(Collection<Long> eventIds);
+    Page<Registration> findByEventIdIn(
+        Collection<Long> eventIds,
+        Pageable pageable
+    );
 
-    List<Registration> findByEventIdInAndUserIdOrderByIdAsc(Collection<Long> eventIds, Long userId);
+    Page<Registration> findByEventIdInAndUserId(
+        Collection<Long> eventIds,
+        Long userId,
+        Pageable pageable
+    );
 }
