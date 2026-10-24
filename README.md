@@ -26,6 +26,8 @@ campus-event-management/
 │       ├── repository/
 │       └── dto/
 ├── documentation/
+│   ├── ERD.md
+│   ├── ERD.png
 │   ├── SETUP.md
 │   ├── API.md
 │   ├── JWT-STORAGE.md
@@ -120,20 +122,23 @@ _Request/response examples are still being collected. Demo accounts, database se
 
 ## Database Schema
 
+Full schema: [backend/database/schema.sql](backend/database/schema.sql). Diagram: [documentation/ERD.md](documentation/ERD.md) ([PNG](documentation/ERD.png)). The lists below are a summary.
+
 ### Users Table
 
 ```
 id (PK)
 name
-email
+email (UNIQUE)
 password
 role (STUDENT, ADMIN)
+created_at
 ```
 
 Roles:
 
-- `STUDENT` — views events, registers for them. The server assigns this at signup; the request body cannot choose a role.
-- `ADMIN` — creates events; updates/deletes **only events it created** (checked via `created_by`). No global admin. Admin accounts come from seed data, not from public signup.
+- `STUDENT`, views events, registers for them. The server assigns this at signup; the request body cannot choose a role.
+- `ADMIN`, creates events; updates/deletes **only events it created** (checked via `created_by`). No global admin. Admin accounts come from seed data, not from public signup.
 
 ### Events Table
 
@@ -144,8 +149,10 @@ description
 date
 time
 location
-category
-capacity
+category (SEMINAR, WORKSHOP, SPORTS, COMPETITION, CONFERENCE, CULTURAL)
+capacity (must be > 0)
+featured (default false)
+created_at
 created_by (FK to Users)
 ```
 
@@ -153,11 +160,12 @@ created_by (FK to Users)
 
 ```
 id (PK)
-user_id (FK)
-event_id (FK)
+user_id (FK to Users)
+event_id (FK to Events)
 registration_date
+UNIQUE (user_id, event_id)
 ```
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License, see [LICENSE](LICENSE).
