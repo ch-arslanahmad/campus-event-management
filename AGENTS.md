@@ -12,12 +12,16 @@
 Architecture decisions live in `documentation/adr/`. Read them before "fixing" stack, structure, or doc layout:
 
 - ADR-0001: Backend Spring Boot/Java (brief suggests Node/Flask/Django — deviation is intentional), frontend React, DB MySQL, Java 17+.
+- ADR-0002: JWTs live in httpOnly cookies, not localStorage (full-cookie auth: access + rotated refresh, one-origin deploy). Guide: `documentation/JWT-STORAGE.md`.
 
 ## Current state
 
-- No application code: `frontend/`, `backend/`, `screenshots/` absent. All are graded deliverables (brief §20).
-- README describes intended architecture + API surface from brief §6/§7 — not yet implemented code.
-- Example API request bodies: placeholder, pending backend implementation.
+- Backend is implemented: Spring Boot + Spring Data JPA on MySQL. Entities, repositories, services and cookie auth live in `backend/src/main/java/com/events/eventmanagement/`.
+- Schema and demo data: `backend/database/schema.sql` + `seed.sql` (100 users, 555 events, 1000 registrations).
+- Frontend exists under `frontend/` (React + Vite).
+- `screenshots/` is still absent — a graded deliverable (brief §20).
+- Local DB setup, demo accounts: `documentation/SETUP.md`.
+- Server-side pagination (ADR-0003, issue #15) is not implemented yet.
 
 ## Documentation conventions
 

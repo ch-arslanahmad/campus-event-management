@@ -1,0 +1,116 @@
+package com.events.eventmanagement.services;
+
+import com.events.eventmanagement.models.Event;
+import com.events.eventmanagement.models.Event.CategoryType;
+import com.events.eventmanagement.repository.EventRepository;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+public class EventService {
+
+    private final EventRepository eventRepository;
+
+    EventService(EventRepository eventRepository) {
+        this.eventRepository = eventRepository;
+    }
+
+    // Get all events, /api/events. The caller passes page/size (and the sort,
+    // ADR-0003); the DB store made the old ConcurrentHashMap seeds unnecessary.
+    public Page<Event> list(Pageable pageable) {
+        return eventRepository.findAll(pageable);
+    }
+
+    public Event getById(Long id) {
+        return eventRepository
+            .findById(id)
+            .orElseThrow(() -> notFound(id));
+    }
+
+    // Get events by category, /api/events/?category=
+    // An unknown category matched nothing before, so it still returns an empty page.
+    public Page<Event> listByCategory(String category, Pageable pageable) {
+        CategoryType parsed;
+
+        try {
+            parsed = CategoryType.valueOf(category.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Page.empty(pageable);
+        }
+
+        return eventRepository.findByCategory(parsed, pageable);
+    }
+
+    // post /api/events
+    @Transactional
+    public Long create(Event event, Long ownerId) {
+        event.setId(null); // server assigns the id (AUTO_INCREMENT)
+        event.setCreatedBy(ownerId); // owner is never taken from the body
+        event.setCreatedAt(
+            LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+        );
+
+        return eventRepository.save(event).getId();
+    }
+
+    // delete /api/events/:id
+    @Transactional
+    public boolean delete(Long id, Long callerId) {
+        Event existing = eventRepository
+            .findById(id)
+            .orElseThrow(() -> notFound(id));
+
+        assertOwner(existing, callerId);
+        eventRepository.delete(existing);
+
+        return true;
+    }
+
+    // an admin may only change events it created
+    private void assertOwner(Event event, Long callerId) {
+        if (
+            event.getCreatedBy() == null ||
+            !event.getCreatedBy().equals(callerId)
+        ) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "You can only modify events you created."
+            );
+        }
+    }
+
+    // put /api/events/:id
+    @Transactional
+    public Event update(Long id, Event updated, Long callerId) {
+        Event existing = eventRepository
+            .findById(id)
+            .orElseThrow(() -> notFound(id));
+
+        assertOwner(existing, callerId);
+
+        existing.setTitle(updated.getTitle());
+        existing.setDescription(updated.getDescription());
+        existing.setDate(updated.getDate());
+        existing.setTime(updated.getTime());
+        existing.setLocation(updated.getLocation());
+        existing.setCategory(updated.getCategory());
+        existing.setCapacity(updated.getCapacity());
+        existing.setFeatured(updated.getFeatured());
+        // id, created_at and created_by never change
+
+        return eventRepository.save(existing);
+    }
+
+    private ResponseStatusException notFound(Long id) {
+        return new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Event with id " + id + " not found."
+        );
+    }
+}
