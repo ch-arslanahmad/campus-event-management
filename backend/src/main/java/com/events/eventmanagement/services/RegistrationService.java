@@ -2,11 +2,17 @@ package com.events.eventmanagement.services;
 
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Registration;
+import com.events.eventmanagement.models.User;
 import com.events.eventmanagement.repository.EventRepository;
 import com.events.eventmanagement.repository.RegistrationRepository;
+import com.events.eventmanagement.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,13 +26,16 @@ public class RegistrationService {
 
     private final RegistrationRepository registrationRepository;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
 
     RegistrationService(
         RegistrationRepository registrationRepository,
-        EventRepository eventRepository
+        EventRepository eventRepository,
+        UserRepository userRepository
     ) {
         this.registrationRepository = registrationRepository;
         this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
     }
 
     // post /api/register
@@ -80,6 +89,73 @@ public class RegistrationService {
         }
     }
 
+    // delete /api/registrations/{id}
+    @Transactional
+    public void cancel(Long registrationId, Long callerId, boolean admin) {
+        Registration registration = registrationRepository
+            .findById(registrationId)
+            .orElseThrow(() ->
+                new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Registration with id " + registrationId + " not found."
+                )
+            );
+
+        boolean ownRegistration = registration.getUserId().equals(callerId);
+        boolean ownsEvent =
+            admin && ownsEvent(registration.getEventId(), callerId);
+
+        if (!ownRegistration && !ownsEvent) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                admin
+                    ? "You can only cancel registrations for events you created."
+                    : "You can only cancel your own registration."
+            );
+        }
+
+        registrationRepository.delete(registration);
+    }
+
+    private boolean ownsEvent(Long eventId, Long callerId) {
+        return eventRepository
+            .findById(eventId)
+            .map(event -> callerId.equals(event.getCreatedBy()))
+            .orElse(false);
+    }
+
+    public long countForEvent(Long eventId) {
+        return registrationRepository.countByEventId(eventId);
+    }
+
+    // one query for a whole page of events
+    public Map<Long, Long> countsByEvent(Collection<Long> eventIds) {
+        if (eventIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> counts = new HashMap<>();
+
+        for (Object[] row : registrationRepository.countGroupedByEventId(
+            eventIds
+        )) {
+            counts.put((Long) row[0], ((Number) row[1]).longValue());
+        }
+
+        return counts;
+    }
+
+    public Map<Long, String> userNames(Collection<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return userRepository
+            .findAllById(userIds)
+            .stream()
+            .collect(Collectors.toMap(User::getId, User::getName));
+    }
+
     // get /api/registrations: the scope comes from the caller's identity,
     // a student sees their own rows, an admin sees rows for events it created
     // (admins are event owners). The scope lives in the query, so totalElements
@@ -131,8 +207,4 @@ public class RegistrationService {
               );
     }
 
-    // used by DELETE /api/events/{id}
-    public boolean hasRegistrations(Long eventId) {
-        return registrationRepository.existsByEventId(eventId);
-    }
 }

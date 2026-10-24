@@ -3,6 +3,8 @@ package com.events.eventmanagement.services;
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
 import com.events.eventmanagement.repository.EventRepository;
+import com.events.eventmanagement.repository.RegistrationRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import org.springframework.data.domain.Page;
@@ -16,35 +18,51 @@ import org.springframework.web.server.ResponseStatusException;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final RegistrationRepository registrationRepository;
 
-    EventService(EventRepository eventRepository) {
+    EventService(
+        EventRepository eventRepository,
+        RegistrationRepository registrationRepository
+    ) {
         this.eventRepository = eventRepository;
+        this.registrationRepository = registrationRepository;
     }
 
-    // Get all events, /api/events. The caller passes page/size (and the sort,
-    // ADR-0003); the DB store made the old ConcurrentHashMap seeds unnecessary.
-    public Page<Event> list(Pageable pageable) {
-        return eventRepository.findAll(pageable);
+    // unknown category -> empty page, not 400
+    public Page<Event> list(
+        String category,
+        Long createdBy,
+        Boolean featured,
+        LocalDate from,
+        String q,
+        Pageable pageable
+    ) {
+        CategoryType parsed = null;
+
+        if (category != null && !category.isBlank()) {
+            try {
+                parsed = CategoryType.valueOf(category.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return Page.empty(pageable);
+            }
+        }
+
+        String search = (q == null || q.isBlank()) ? null : q.trim();
+
+        return eventRepository.search(
+            parsed,
+            createdBy,
+            featured,
+            from,
+            search,
+            pageable
+        );
     }
 
     public Event getById(Long id) {
         return eventRepository
             .findById(id)
             .orElseThrow(() -> notFound(id));
-    }
-
-    // Get events by category, /api/events/?category=
-    // An unknown category matched nothing before, so it still returns an empty page.
-    public Page<Event> listByCategory(String category, Pageable pageable) {
-        CategoryType parsed;
-
-        try {
-            parsed = CategoryType.valueOf(category.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return Page.empty(pageable);
-        }
-
-        return eventRepository.findByCategory(parsed, pageable);
     }
 
     // post /api/events
@@ -66,7 +84,17 @@ public class EventService {
             .findById(id)
             .orElseThrow(() -> notFound(id));
 
+        // ownership first: otherwise a caller learns whether someone else's
+        // event has registrations (409 instead of 403)
         assertOwner(existing, callerId);
+
+        if (registrationRepository.existsByEventId(id)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Event has registrations and cannot be deleted."
+            );
+        }
+
         eventRepository.delete(existing);
 
         return true;
@@ -93,6 +121,18 @@ public class EventService {
             .orElseThrow(() -> notFound(id));
 
         assertOwner(existing, callerId);
+
+        long taken = registrationRepository.countByEventId(id);
+
+        if (updated.getCapacity() < taken) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Capacity cannot be lower than the " +
+                    taken +
+                    " existing registration" +
+                    (taken == 1 ? "." : "s.")
+            );
+        }
 
         existing.setTitle(updated.getTitle());
         existing.setDescription(updated.getDescription());
