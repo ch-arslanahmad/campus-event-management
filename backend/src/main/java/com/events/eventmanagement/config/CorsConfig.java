@@ -14,7 +14,7 @@ public class CorsConfig {
     // origins come from app.cors.allowed-origins; never a wildcard, because
     // credentials are enabled
     @Bean
-    public CorsConfigurationSource corsConfiguration(
+    public CorsConfigurationSource corsConfigurationSource(
         @Value("${app.cors.allowed-origins}") String allowedOrigins
     ) {
         CorsConfiguration config = new CorsConfiguration();
