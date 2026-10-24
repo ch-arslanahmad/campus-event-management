@@ -26,9 +26,27 @@ services:
     environment:
       APP_DB_URL: jdbc:mysql://db:3306/campus_events
       APP_DB_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      APP_DB_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+  frontend:
+    environment:
+      BACKEND_URL: http://backend:8080
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_started
+
 volumes:
   db_data:
