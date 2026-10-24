@@ -3,6 +3,7 @@ package com.events.eventmanagement.services;
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
 import com.events.eventmanagement.repository.EventRepository;
+import com.events.eventmanagement.repository.RegistrationRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import org.springframework.data.domain.Page;
@@ -16,18 +17,18 @@ import org.springframework.web.server.ResponseStatusException;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final RegistrationRepository registrationRepository;
 
-    EventService(EventRepository eventRepository) {
+    EventService(
+        EventRepository eventRepository,
+        RegistrationRepository registrationRepository
+    ) {
         this.eventRepository = eventRepository;
+        this.registrationRepository = registrationRepository;
     }
 
-    // Get events, /api/events. The caller passes category + page/size (and the
-    // sort, ADR-0003); the DB store made the old ConcurrentHashMap seeds
-    // unnecessary.
-    //
-    // category and createdBy are independent filters, so they are resolved once
-    // here instead of in four controller branches: an unknown category still
-    // returns an empty page (it matched nothing before), never a 400.
+    // GET /api/events: category and createdBy are independent filters; an
+    // unknown category returns an empty page, never a 400 (ADR-0003 paging)
     public Page<Event> list(
         String category,
         Long createdBy,
@@ -114,6 +115,18 @@ public class EventService {
             .orElseThrow(() -> notFound(id));
 
         assertOwner(existing, callerId);
+
+        long taken = registrationRepository.countByEventId(id);
+
+        if (updated.getCapacity() < taken) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Capacity cannot be lower than the " +
+                    taken +
+                    " existing registration" +
+                    (taken == 1 ? "." : "s.")
+            );
+        }
 
         existing.setTitle(updated.getTitle());
         existing.setDescription(updated.getDescription());

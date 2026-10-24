@@ -43,9 +43,7 @@ public class EventController {
     @GetMapping
     public ResponseEntity<PageResponse<EventResponse>> getAllEvents(
         @RequestParam(name = "category", required = false) String category,
-        // admin dashboard: only the events this admin may edit (service enforces
-        // the same owner on PUT/DELETE, so without the filter the UI offers
-        // actions that 403)
+        // admin dashboard: only events this admin may edit
         @RequestParam(name = "createdBy", required = false) Long createdBy,
         @RequestParam(name = "page", defaultValue = "0") int page,
         @RequestParam(name = "size", defaultValue = "20") int size
@@ -54,10 +52,21 @@ public class EventController {
 
         Page<Event> events = eventService.list(category, createdBy, pageable);
 
+        Map<Long, Long> counts = registrationService.countsByEvent(
+            events.getContent().stream().map(Event::getId).toList()
+        );
+
         // map() keeps the paging metadata, so the envelope describes the whole
         // filtered set, not just this page
         return ResponseEntity.ok(
-            PageResponse.of(events.map(EventResponse::from))
+            PageResponse.of(
+                events.map(event ->
+                    EventResponse.from(
+                        event,
+                        counts.getOrDefault(event.getId(), 0L)
+                    )
+                )
+            )
         );
     }
 
@@ -66,7 +75,10 @@ public class EventController {
         // Logic to retrieve a specific event by ID from the database
         Event event = eventService.getById(id);
 
-        EventResponse eventResponse = EventResponse.from(event);
+        EventResponse eventResponse = EventResponse.from(
+            event,
+            registrationService.countForEvent(id)
+        );
 
         return ResponseEntity.status(200).body(eventResponse);
     }
@@ -125,7 +137,10 @@ public class EventController {
                 // same shape as GET /api/events/{id}: the raw entity would expose
                 // createdAt/createdBy and a time with seconds
                 "event",
-                EventResponse.from(updatedEvent)
+                EventResponse.from(
+                    updatedEvent,
+                    registrationService.countForEvent(id)
+                )
             )
         );
     }

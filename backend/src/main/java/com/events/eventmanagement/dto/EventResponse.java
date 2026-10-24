@@ -14,18 +14,18 @@ public record EventResponse(
     String location,
     CategoryType category,
     Integer capacity,
+    long registeredCount,
     Boolean featured,
-
     @JsonProperty("created_at") String createdAt,
-
     @JsonProperty("created_by") Long createdBy
 ) {
-    // the API keeps the string shapes the frontend already consumes
     static final DateTimeFormatter CREATED_AT_FORMAT = DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss"
     );
 
-    public static EventResponse from(Event event) {
+    // no single-argument overload: a caller that lacks the count passes 0
+    // explicitly instead of shipping a silently wrong number
+    public static EventResponse from(Event event, long registeredCount) {
         return new EventResponse(
             event.getId(),
             event.getTitle(),
@@ -35,6 +35,7 @@ public record EventResponse(
             event.getLocation(),
             event.getCategory(),
             event.getCapacity(),
+            registeredCount,
             event.getFeatured(),
             event.getCreatedAt() == null
                 ? null
