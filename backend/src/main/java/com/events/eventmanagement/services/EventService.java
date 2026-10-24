@@ -4,6 +4,7 @@ import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
 import com.events.eventmanagement.repository.EventRepository;
 import com.events.eventmanagement.repository.RegistrationRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import org.springframework.data.domain.Page;
@@ -27,11 +28,13 @@ public class EventService {
         this.registrationRepository = registrationRepository;
     }
 
-    // GET /api/events: category and createdBy are independent filters; an
-    // unknown category returns an empty page, never a 400 (ADR-0003 paging)
+    // unknown category -> empty page, not 400
     public Page<Event> list(
         String category,
         Long createdBy,
+        Boolean featured,
+        LocalDate from,
+        String q,
         Pageable pageable
     ) {
         CategoryType parsed = null;
@@ -44,23 +47,16 @@ public class EventService {
             }
         }
 
-        if (parsed != null && createdBy != null) {
-            return eventRepository.findByCategoryAndCreatedBy(
-                parsed,
-                createdBy,
-                pageable
-            );
-        }
+        String search = (q == null || q.isBlank()) ? null : q.trim();
 
-        if (parsed != null) {
-            return eventRepository.findByCategory(parsed, pageable);
-        }
-
-        if (createdBy != null) {
-            return eventRepository.findByCreatedBy(createdBy, pageable);
-        }
-
-        return eventRepository.findAll(pageable);
+        return eventRepository.search(
+            parsed,
+            createdBy,
+            featured,
+            from,
+            search,
+            pageable
+        );
     }
 
     public Event getById(Long id) {

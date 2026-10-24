@@ -159,7 +159,7 @@ const response = await fetch("/api/events", { credentials: "include" });
 const data = await response.json(); // returns PageResponse envelope {content,page,size,totalElements,totalPages,first,last}
 ```
 
-Cookie auth (`jwt_token`, `HttpOnly`) requires `CorsConfig.setAllowCredentials(true)` (done) and `credentials: "include"` (or same-origin proxy — no CORS). The backend `GET /api/events` also accepts `?createdBy=<id>` (admin scope) and paginates at `?page=0&size=20` (max 100).
+Cookie auth (`jwt_token`, `HttpOnly`) requires `CorsConfig.setAllowCredentials(true)` (done) and `credentials: "include"` (or same-origin proxy — no CORS). `GET /api/events` filters with `?category=`, `?q=` (title search), `?featured=true`, `?from=YYYY-MM-DD`, `?createdBy=<id>` (admin scope), and paginates at `?page=0&size=20` (max 100).
 
 ## Git Workflow
 

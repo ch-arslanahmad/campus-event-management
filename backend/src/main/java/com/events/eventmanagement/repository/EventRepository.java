@@ -2,6 +2,7 @@ package com.events.eventmanagement.repository;
 
 import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.models.Event.CategoryType;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -12,17 +13,21 @@ import org.springframework.data.repository.query.Param;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    // paged so ?category= is filtered by the database before counting
-    Page<Event> findByCategory(CategoryType category, Pageable pageable);
-
-    // ?createdBy= scopes the list to one owner's events (admin dashboard). It
-    // replaces the client-side filter on created_by, which could only ever
-    // filter the page it had already fetched, so totalElements was wrong.
-    Page<Event> findByCreatedBy(Long ownerId, Pageable pageable);
-
-    Page<Event> findByCategoryAndCreatedBy(
-        CategoryType category,
-        Long ownerId,
+    // every filter optional; null = not filtered
+    @Query(
+        "select e from Event e " +
+            "where (:category is null or e.category = :category) " +
+            "and (:createdBy is null or e.createdBy = :createdBy) " +
+            "and (:featured is null or e.featured = :featured) " +
+            "and (:from is null or e.date >= :from) " +
+            "and (:q is null or lower(e.title) like lower(concat('%', :q, '%')))"
+    )
+    Page<Event> search(
+        @Param("category") CategoryType category,
+        @Param("createdBy") Long createdBy,
+        @Param("featured") Boolean featured,
+        @Param("from") LocalDate from,
+        @Param("q") String q,
         Pageable pageable
     );
 

@@ -8,9 +8,11 @@ import com.events.eventmanagement.models.Event;
 import com.events.eventmanagement.services.EventService;
 import com.events.eventmanagement.services.RegistrationService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,12 +45,23 @@ public class EventController {
         @RequestParam(name = "category", required = false) String category,
         // admin dashboard: only events this admin may edit
         @RequestParam(name = "createdBy", required = false) Long createdBy,
+        @RequestParam(name = "featured", required = false) Boolean featured,
+        @RequestParam(name = "from", required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(name = "q", required = false) String q,
         @RequestParam(name = "page", defaultValue = "0") int page,
         @RequestParam(name = "size", defaultValue = "20") int size
     ) {
         Pageable pageable = PageQuery.toPageable(page, size);
 
-        Page<Event> events = eventService.list(category, createdBy, pageable);
+        Page<Event> events = eventService.list(
+            category,
+            createdBy,
+            featured,
+            from,
+            q,
+            pageable
+        );
 
         Map<Long, Long> counts = registrationService.countsByEvent(
             events.getContent().stream().map(Event::getId).toList()
