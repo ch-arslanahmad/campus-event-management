@@ -142,12 +142,24 @@ Public signup always creates a `STUDENT`; admin accounts come from the seed.
 
 ## Frontend to Backend Connection
 
-Update API calls in React components to point to backend:
+Run both at once (frontend uses Vite proxy so no `fetch` base URL is needed):
+
+```shell
+# terminal 1
+cd backend && ./mvnw spring-boot:run
+
+# terminal 2
+cd frontend && npm install && npm run dev
+```
+
+The Vite dev server proxies `/api/*` to `http://localhost:8080` (`vite.config.js`), so React calls relative URLs:
 
 ```javascript
-const response = await fetch("http://localhost:8080/api/events");
-const data = await response.json();
+const response = await fetch("/api/events", { credentials: "include" });
+const data = await response.json(); // returns PageResponse envelope {content,page,size,totalElements,totalPages,first,last}
 ```
+
+Cookie auth (`jwt_token`, `HttpOnly`) requires `CorsConfig.setAllowCredentials(true)` (done) and `credentials: "include"` (or same-origin proxy — no CORS). The backend `GET /api/events` also accepts `?createdBy=<id>` (admin scope) and paginates at `?page=0&size=20` (max 100).
 
 ## Git Workflow
 
