@@ -43,7 +43,7 @@ USER appuser
 EXPOSE 8080
 
 # healthprobe waits until Spring Boot has connected to MySQL and starts up
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+HEALTHCHECK --interval=15s --timeout=3s --retries=3 --start-period=40s \
   CMD curl -fsS http://localhost:8080/actuator/health || exit 1
 
 # start the spring boot application when the container starts
