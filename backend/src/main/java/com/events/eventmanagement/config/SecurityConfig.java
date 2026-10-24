@@ -50,6 +50,13 @@ public class SecurityConfig {
                                 "/api/events/**")
                         .permitAll()
 
+                        // health endpoint is polled by the Docker HEALTHCHECK
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/actuator/health",
+                                "/actuator/info")
+                        .permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/api/events")
                         .hasRole(User.ROLE.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/api/events/**")
