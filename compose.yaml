@@ -19,5 +19,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    environment:
+      APP_DB_URL: jdbc:mysql://db:3306/campus_events
+      APP_DB_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   db_data:
