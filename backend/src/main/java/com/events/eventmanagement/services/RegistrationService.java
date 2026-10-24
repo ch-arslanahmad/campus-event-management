@@ -207,8 +207,4 @@ public class RegistrationService {
               );
     }
 
-    // used by DELETE /api/events/{id}
-    public boolean hasRegistrations(Long eventId) {
-        return registrationRepository.existsByEventId(eventId);
-    }
 }

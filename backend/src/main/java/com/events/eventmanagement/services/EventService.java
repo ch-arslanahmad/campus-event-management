@@ -88,7 +88,17 @@ public class EventService {
             .findById(id)
             .orElseThrow(() -> notFound(id));
 
+        // ownership first: otherwise a caller learns whether someone else's
+        // event has registrations (409 instead of 403)
         assertOwner(existing, callerId);
+
+        if (registrationRepository.existsByEventId(id)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Event has registrations and cannot be deleted."
+            );
+        }
+
         eventRepository.delete(existing);
 
         return true;
