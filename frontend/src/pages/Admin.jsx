@@ -1,114 +1,44 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { categories } from '../assets/eventsData.js'
-import { getEvents, createEvent, updateEvent, deleteEvent } from '../assets/data.js'
+import { getEvents, getRegistrations, createEvent, updateEvent, deleteEvent, getEventById } from '../assets/data.js'
+import { eventCapacity, eventStatus, validateCapacity } from '../assets/adminRules.js'
 import { getCurrentUser } from '../assets/auth.js'
 
-const empty = { title: '', category: 'seminar', date: '', time: '', venue: '', desc: '' }
+const empty = { title: '', category: 'seminar', date: '', time: '', venue: '', desc: '', capacity: 100 }
+const tabs = ['Overview', 'Events', 'Registrations', 'Profile']
+const inputDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : new Date(`${value}, ${new Date().getFullYear()}`).toISOString().slice(0, 10)
+const inputTime = (value) => /^\d{2}:\d{2}$/.test(value) ? value : new Date(`1970-01-01 ${value}`).toTimeString().slice(0, 5)
+
+function Form({ form, setForm, editingId, onSubmit, onCancel, error }) {
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  return <div className="admin__form-card" id="event-form"><h2>{editingId ? 'Edit event' : 'Create event'}</h2><form onSubmit={onSubmit} className="admin__form">
+    <label>Title<input required value={form.title} onChange={set('title')} placeholder="Event name" /></label><label>Category<select value={form.category} onChange={set('category')}>{Object.entries(categories).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>
+    <label>Date<input required type="date" value={form.date} onChange={set('date')} /></label><label>Time<input required type="time" value={form.time} onChange={set('time')} /></label>
+    <label>Venue<input required value={form.venue} onChange={set('venue')} placeholder="Main Auditorium" /></label><label>Capacity<input required min="1" step="1" type="number" value={form.capacity} onChange={set('capacity')} /></label>
+    <label className="admin__wide">Description<textarea rows="3" value={form.desc} onChange={set('desc')} placeholder="Short description of the event" /></label>{error && <p className="error admin__wide" role="alert">{error}</p>}<div className="admin__actions admin__wide"><button className="btn btn--primary">{editingId ? 'Save changes' : 'Create event'}</button>{editingId && <button className="btn btn--outline" type="button" onClick={onCancel}>Cancel</button>}</div>
+  </form></div>
+}
 
 function Panel() {
-  const [list, setList] = useState(getEvents())
-  const [form, setForm] = useState(empty)
-  const [editingId, setEditingId] = useState(null)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
-
+  const [list, setList] = useState(getEvents()), [registrations] = useState(getRegistrations()), [tab, setTab] = useState('Overview')
+  const [form, setForm] = useState(empty), [editingId, setEditingId] = useState(null), [error, setError] = useState(''), [message, setMessage] = useState('')
+  const [query, setQuery] = useState(''), [category, setCategory] = useState('all'), [status, setStatus] = useState('all')
+  const count = (id) => registrations.filter((item) => String(item.eventId) === String(id)).length
+  const upcoming = list.filter((event) => eventStatus(event, count(event.id)) === 'Upcoming')
+  const utilisation = list.length ? Math.round((registrations.length / list.reduce((total, event) => total + eventCapacity(event), 0)) * 100) : 0
+  const visible = list.filter((event) => (event.title.toLowerCase().includes(query.toLowerCase()) || String(event.date).includes(query)) && (category === 'all' || event.category === category) && (status === 'all' || eventStatus(event, count(event.id)).toLowerCase() === status))
   const reset = () => { setForm(empty); setEditingId(null); setError('') }
-
-  const submit = (e) => {
-    e.preventDefault()
-    if (!form.title.trim() || !form.date.trim() || !form.time.trim() || !form.venue.trim()) {
-      return setError('Title, date, time and venue are required.')
-    }
-    if (editingId) {
-      setList(updateEvent(editingId, form))
-      setMessage('Event updated.')
-    } else {
-      setList(createEvent(form))
-      setMessage('Event added.')
-    }
-    reset()
-  }
-
-  const startEdit = (ev) => {
-    setEditingId(ev.id)
-    setForm({ title: ev.title, category: ev.category, date: ev.date, time: ev.time, venue: ev.venue, desc: ev.desc })
-    setMessage('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const remove = (ev) => {
-    if (!window.confirm(`Delete "${ev.title}"? This cannot be undone.`)) return
-    setList(deleteEvent(ev.id))
-    if (editingId === ev.id) reset()
-    setMessage('Event deleted.')
-  }
-
-  return (
-    <section className="section">
-      <div className="container">
-        <h1 className="page-title">Admin dashboard</h1>
-
-        <div className="admin__form-card">
-          <h2>{editingId ? 'Edit event' : 'Add a new event'}</h2>
-          <form onSubmit={submit} className="admin__form">
-            <label>Title<input value={form.title} onChange={set('title')} placeholder="Event name" /></label>
-            <label>Category
-              <select value={form.category} onChange={set('category')}>
-                {Object.entries(categories).map(([k, c]) => <option key={k} value={k}>{c.label}</option>)}
-              </select>
-            </label>
-            <label>Date<input value={form.date} onChange={set('date')} placeholder="Dec 15" /></label>
-            <label>Time<input value={form.time} onChange={set('time')} placeholder="10:00 AM" /></label>
-            <label>Venue<input value={form.venue} onChange={set('venue')} placeholder="Main Auditorium" /></label>
-            <label className="admin__wide">Description
-              <textarea rows="3" value={form.desc} onChange={set('desc')} placeholder="Short description of the event" />
-            </label>
-            {error && <p className="error admin__wide" role="alert">{error}</p>}
-            <div className="admin__actions admin__wide">
-              <button className="btn btn--primary" type="submit">{editingId ? 'Save changes' : 'Add event'}</button>
-              {editingId && <button className="btn btn--outline" type="button" onClick={reset}>Cancel</button>}
-            </div>
-          </form>
-        </div>
-
-        {message && <p className="success" role="status">{message}</p>}
-
-        <h2 style={{ marginTop: 48 }}>All events ({list.length})</h2>
-        {list.length === 0 ? (
-          <p className="empty">No events yet. Add your first one above.</p>
-        ) : (
-          <div className="admin__table-wrap">
-            <table className="admin__table">
-              <thead>
-                <tr><th>Title</th><th>Category</th><th>Date</th><th>Venue</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                {list.map((ev) => (
-                  <tr key={ev.id}>
-                    <td><strong>{ev.title}</strong></td>
-                    <td>{categories[ev.category]?.label}</td>
-                    <td>{ev.date}, {ev.time}</td>
-                    <td>{ev.venue}</td>
-                    <td className="admin__row-actions">
-                      <button className="btn btn--outline btn--small" onClick={() => startEdit(ev)}>Edit</button>
-                      <button className="btn btn--danger btn--small" onClick={() => remove(ev)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </section>
-  )
+  const showEvents = () => { setTab('Events'); reset(); setTimeout(() => document.getElementById('event-form')?.scrollIntoView({ behavior: 'smooth' }), 0) }
+  const submit = (e) => { e.preventDefault(); const capacityError = validateCapacity(form.capacity, editingId ? count(editingId) : 0); if (capacityError) return setError(capacityError); const data = { ...form, capacity: Number(form.capacity) }; setList(editingId ? updateEvent(editingId, data) : createEvent(data)); setMessage(editingId ? 'Event updated.' : 'Event created.'); reset() }
+  const edit = (event) => { setEditingId(event.id); setForm({ title: event.title, category: event.category, date: inputDate(event.date), time: inputTime(event.time), venue: event.venue, desc: event.desc ?? '', capacity: eventCapacity(event) }); setTab('Events'); setTimeout(() => document.getElementById('event-form')?.scrollIntoView({ behavior: 'smooth' }), 0) }
+  const remove = (event) => { const result = deleteEvent(event.id); if (result.error) return setError(result.error); setList(result.list); setMessage('Event deleted.'); if (editingId === event.id) reset() }
+  return <section className="section admin-workspace"><div className="container"><div className="admin-layout"><aside className="admin-nav"><p className="eyebrow">Administrator</p><h2>Event hub</h2><nav aria-label="Admin sections">{tabs.map((item) => <button key={item} className={tab === item ? 'is-active' : ''} onClick={() => setTab(item)}>{item}</button>)}</nav></aside><div className="admin-content">
+    {message && <p className="success" role="status">{message}</p>}{error && tab !== 'Events' && <p className="error" role="alert">{error}</p>}
+    {tab === 'Overview' && <><div className="admin-heading"><div><p className="eyebrow">Overview</p><h1>Campus events at a glance</h1><p className="lead">Keep registrations, capacity and upcoming activity moving.</p></div><div className="admin__actions"><button className="btn btn--primary" onClick={showEvents}>Create event</button><button className="btn btn--outline" onClick={() => setTab('Events')}>Manage events</button></div></div><div className="metrics"><article><span>Total events</span><strong>{list.length}</strong></article><article><span>Upcoming events</span><strong>{upcoming.length}</strong></article><article><span>Total registrations</span><strong>{registrations.length}</strong></article><article><span>Seat utilisation</span><strong>{utilisation}%</strong></article></div><div className="admin-panels"><article className="admin-panel"><h2>Upcoming events</h2>{upcoming.slice(0, 4).map((event) => <p key={event.id}><strong>{event.title}</strong><span>{event.date} · {event.time}</span></p>)}{!upcoming.length && <p className="empty">No upcoming events.</p>}</article><article className="admin-panel"><h2>Recent registration activity</h2>{registrations.slice(-4).reverse().map((item) => <p key={item.id}><strong>{item.name}</strong><span>joined {getEventById(item.eventId)?.title ?? 'a removed event'}</span></p>)}{!registrations.length && <p className="empty">No registrations yet.</p>}</article></div></>}
+    {tab === 'Events' && <><div className="admin-heading"><div><p className="eyebrow">Events management</p><h1>Plan and manage events</h1></div><button className="btn btn--outline" onClick={reset}>New event</button></div><Form {...{ form, setForm, editingId, onSubmit: submit, onCancel: reset, error }} /><div className="admin-filters"><input className="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search events or dates" /><select value={category} onChange={(e) => setCategory(e.target.value)}><option value="all">All categories</option>{Object.entries(categories).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All statuses</option><option value="upcoming">Upcoming</option><option value="full">Full</option></select></div><p className="table-cue">Swipe to see actions →</p><div className="admin__table-wrap"><table className="admin__table"><thead><tr><th>Event</th><th>Category</th><th>Schedule</th><th>Registrations</th><th>Seats left</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visible.map((event) => { const registrationsForEvent = count(event.id); const eventState = eventStatus(event, registrationsForEvent); return <tr key={event.id}><td><strong>{event.title}</strong></td><td>{categories[event.category]?.label}</td><td>{event.date}<br />{event.time}</td><td>{registrationsForEvent} / {eventCapacity(event)}</td><td>{Math.max(eventCapacity(event) - registrationsForEvent, 0)}</td><td><span className={`status status--${eventState.toLowerCase()}`}>{eventState}</span></td><td className="admin__row-actions"><button className="btn btn--outline btn--small" onClick={() => edit(event)}>Edit</button><button className="btn btn--danger btn--small" onClick={() => remove(event)}>Delete</button></td></tr> })}</tbody></table></div></>}
+    {tab === 'Registrations' && <><p className="eyebrow">Registrations</p><h1>Student registrations</h1><div className="admin-panel registration-admin-list">{registrations.length ? registrations.slice().reverse().map((item) => <p key={item.id}><strong>{item.name}</strong><span>{item.email} · {getEventById(item.eventId)?.title ?? 'Event unavailable'}</span></p>) : <p className="empty">No registrations yet.</p>}</div></>}
+    {tab === 'Profile' && <><p className="eyebrow">Settings</p><h1>Admin profile</h1><div className="admin-panel"><h2>Dr. Ayesha Khan</h2><p>Events Administrator · Student Affairs</p><p className="form-note">Profile editing will be connected to the backend account service.</p><Link className="btn btn--outline" to="/profile">View profile</Link></div></>}
+  </div></div></div></section>
 }
-
-// Only admins can open this page
-export default function Admin() {
-  const user = getCurrentUser()
-  if (!user || user.role !== 'admin') return <Navigate to="/login?role=admin" replace />
-  return <Panel />
-}
+export default function Admin() { const user = getCurrentUser(); return !user || user.role !== 'admin' ? <Navigate to="/login?role=admin" replace /> : <Panel /> }

@@ -38,9 +38,12 @@ export function updateEvent(id, data) {
 }
 
 export function deleteEvent(id) {
+  if (getRegistrations().some((registration) => String(registration.eventId) === String(id))) {
+    return { error: 'This event has active registrations. Cancel or move those registrations before deleting it.' }
+  }
   const list = getEvents().filter((event) => String(event.id) !== String(id))
   write(EVENTS_KEY, list)
-  return list
+  return { list }
 }
 
 export const getRegistrations = () => read(REGISTRATIONS_KEY, [])

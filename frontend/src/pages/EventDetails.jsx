@@ -25,6 +25,7 @@ export default function EventDetails({ eventId }) {
   const myRegistrations = registrationEmail
     ? registrations.filter((item) => item.email === registrationEmail)
     : []
+  const isRegistered = myRegistrations.some((item) => String(item.eventId) === String(event.id))
 
   const submit = (e) => {
     e.preventDefault()
@@ -73,7 +74,8 @@ export default function EventDetails({ eventId }) {
             <form onSubmit={submit} noValidate>
               {errors.form && <p className="error" role="alert">{errors.form}</p>}
               {success && <p className="success" role="status">{success}</p>}
-              <button className="btn btn--primary btn--block" type="submit" disabled={isFull || !user || user.role === 'admin'}>{isFull ? 'Registration closed' : !user ? 'Log in to register' : user.role === 'admin' ? 'Admin account' : 'Register now'}</button>
+              <button className="btn btn--primary btn--block" type="submit" disabled={isFull || isRegistered || !user || user.role === 'admin'}>{isRegistered ? 'Registered' : isFull ? 'Registration closed' : !user ? 'Log in to register' : user.role === 'admin' ? 'Admin account' : 'Register now'}</button>
+              {isRegistered && <Link to="/my-events" className="registration-next">View my events →</Link>}
             </form>
           </aside>
         </div>
@@ -84,7 +86,7 @@ export default function EventDetails({ eventId }) {
           {!user && <p className="empty">Log in as a student to view your registrations.</p>}
           {user?.role === 'user' && !myRegistrations.length && <p className="empty">You have not registered for any events yet.</p>}
           {user?.role === 'admin' && <p className="empty">Administrators do not have student registrations.</p>}
-          {myRegistrations.length > 0 && <ul className="registration-list">{myRegistrations.map((item) => <li key={item.id}><strong>{item.eventId === event.id ? event.title : `Event #${item.eventId}`}</strong><span>Registered {new Date(item.registrationDate).toLocaleDateString()}</span></li>)}</ul>}
+          {myRegistrations.length > 0 && <ul className="registration-list">{myRegistrations.map((item) => { const registeredEvent = getEventById(item.eventId); return <li key={item.id}><strong>{registeredEvent?.title ?? 'Campus event'}</strong><span>{registeredEvent ? `${registeredEvent.date} · ${registeredEvent.time}` : `Registered ${new Date(item.registrationDate).toLocaleDateString()}`}</span></li> })}</ul>}
         </section>
       </div>
     </section>
