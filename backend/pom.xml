@@ -33,6 +33,12 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
+		<!-- Actuator: health endpoint for Docker healthcheck -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
 		<!--  Spring Security (password hashing, authorization, authentication, unit-tests etc) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

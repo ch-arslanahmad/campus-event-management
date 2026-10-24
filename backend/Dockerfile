@@ -22,14 +22,29 @@ RUN ./mvnw -B -DskipTests package
 
 FROM eclipse-temurin:21-jre AS runtime
 
+# curl for the Docker healthcheck; remove the apt list cache so the layer stays small
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# create a non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+
 # set the working directory
 WORKDIR /app
 
-# copy the packaged jar
-COPY --from=build /app/target/*.jar app.jar
+# chown the jar so the non‑root user can read it
+COPY --from=build /app/target/eventmanagement-*.jar app.jar
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 # document the port the application listens on
 EXPOSE 8080
+
+# healthprobe waits until Spring Boot has connected to MySQL and starts up
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -fsS http://localhost:8080/actuator/health || exit 1
 
 # start the spring boot application when the container starts
 ENTRYPOINT ["java", "-jar", "app.jar"]
