@@ -22,12 +22,22 @@ Serves at http://localhost:5173.
 
 - `/` home page
 - `/events` all events, optional `?category=`
+- `/event?id=1` standalone event details and demo registration
 - `/login` login, optional `?role=admin`
 - `/signup` sign up
-- `/admin` admin dashboard, admins only
+- `/dashboard` protected admin dashboard
+- `/my-events` protected student registrations page
+- `/profile` protected role-aware demo profile
+- `/admin` legacy admin dashboard route, admins only
 
 ## Data and auth
 
-Events are sample data in `src/assets/eventsData.js`. Login and sign up are
-demo only, stored in `localStorage`, and get replaced by the real API.
-Demo admin: `admin@campus.com` / `admin123`.
+Events and registrations pass through `src/assets/data.js`, which currently uses
+demo data and `localStorage` so it can be replaced by API calls later. Login and
+sign up are also demo-only and stored in `localStorage`.
+
+The credentials below are development seeds, not production credentials. They
+must move to server-side authentication with hashed passwords before deployment:
+
+- Student: `student@campus.com` / `student123`
+- Admin: `admin@campus.com` / `admin123`

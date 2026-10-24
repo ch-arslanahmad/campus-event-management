@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { login } from '../assets/auth.js'
+import { useAuth } from '../assets/AuthContext.jsx'
 
 export default function Login() {
   const [params] = useSearchParams()
@@ -9,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
+  const { login } = useAuth()
 
   const submit = (e) => {
     e.preventDefault()
@@ -18,7 +19,7 @@ export default function Login() {
     }
     const res = login({ ...form, role })
     if (res.error) { setError(res.error); return }
-    navigate(res.user.role === 'admin' ? '/admin' : '/events')
+    navigate(res.user.role === 'admin' ? '/dashboard' : '/my-events')
   }
 
   return (
@@ -43,6 +44,10 @@ export default function Login() {
           {error && <p className="error" role="alert">{error}</p>}
           <button className="btn btn--primary btn--block" type="submit">Log in as {role === 'admin' ? 'admin' : 'user'}</button>
         </form>
+        <div className="demo-login" role="note">
+          <strong>Demo {role === 'admin' ? 'admin' : 'student'} account</strong>
+          <span>{role === 'admin' ? 'admin@campus.com / admin123' : 'student@campus.com / student123'}</span>
+        </div>
         {role === 'user' && <p className="form-switch">New here? <Link to="/signup">Create an account</Link></p>}
       </div>
     </section>
