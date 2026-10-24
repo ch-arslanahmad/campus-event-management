@@ -43,15 +43,16 @@ public class EventController {
     @GetMapping
     public ResponseEntity<PageResponse<EventResponse>> getAllEvents(
         @RequestParam(name = "category", required = false) String category,
+        // admin dashboard: only the events this admin may edit (service enforces
+        // the same owner on PUT/DELETE, so without the filter the UI offers
+        // actions that 403)
+        @RequestParam(name = "createdBy", required = false) Long createdBy,
         @RequestParam(name = "page", defaultValue = "0") int page,
         @RequestParam(name = "size", defaultValue = "20") int size
     ) {
         Pageable pageable = PageQuery.toPageable(page, size);
 
-        Page<Event> events =
-            category != null && !category.isBlank()
-                ? eventService.listByCategory(category, pageable)
-                : eventService.list(pageable);
+        Page<Event> events = eventService.list(category, createdBy, pageable);
 
         // map() keeps the paging metadata, so the envelope describes the whole
         // filtered set, not just this page

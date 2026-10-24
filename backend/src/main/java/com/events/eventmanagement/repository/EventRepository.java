@@ -15,6 +15,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // paged so ?category= is filtered by the database before counting
     Page<Event> findByCategory(CategoryType category, Pageable pageable);
 
+    // ?createdBy= scopes the list to one owner's events (admin dashboard). It
+    // replaces the client-side filter on created_by, which could only ever
+    // filter the page it had already fetched, so totalElements was wrong.
+    Page<Event> findByCreatedBy(Long ownerId, Pageable pageable);
+
+    Page<Event> findByCategoryAndCreatedBy(
+        CategoryType category,
+        Long ownerId,
+        Pageable pageable
+    );
+
     // ids of the events one admin owns, used to scope its registration view
     @Query("select e.id from Event e where e.createdBy = :ownerId")
     List<Long> findIdsByCreatedBy(@Param("ownerId") Long ownerId);

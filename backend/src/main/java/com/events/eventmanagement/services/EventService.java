@@ -21,9 +21,44 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
-    // Get all events, /api/events. The caller passes page/size (and the sort,
-    // ADR-0003); the DB store made the old ConcurrentHashMap seeds unnecessary.
-    public Page<Event> list(Pageable pageable) {
+    // Get events, /api/events. The caller passes category + page/size (and the
+    // sort, ADR-0003); the DB store made the old ConcurrentHashMap seeds
+    // unnecessary.
+    //
+    // category and createdBy are independent filters, so they are resolved once
+    // here instead of in four controller branches: an unknown category still
+    // returns an empty page (it matched nothing before), never a 400.
+    public Page<Event> list(
+        String category,
+        Long createdBy,
+        Pageable pageable
+    ) {
+        CategoryType parsed = null;
+
+        if (category != null && !category.isBlank()) {
+            try {
+                parsed = CategoryType.valueOf(category.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return Page.empty(pageable);
+            }
+        }
+
+        if (parsed != null && createdBy != null) {
+            return eventRepository.findByCategoryAndCreatedBy(
+                parsed,
+                createdBy,
+                pageable
+            );
+        }
+
+        if (parsed != null) {
+            return eventRepository.findByCategory(parsed, pageable);
+        }
+
+        if (createdBy != null) {
+            return eventRepository.findByCreatedBy(createdBy, pageable);
+        }
+
         return eventRepository.findAll(pageable);
     }
 
@@ -31,20 +66,6 @@ public class EventService {
         return eventRepository
             .findById(id)
             .orElseThrow(() -> notFound(id));
-    }
-
-    // Get events by category, /api/events/?category=
-    // An unknown category matched nothing before, so it still returns an empty page.
-    public Page<Event> listByCategory(String category, Pageable pageable) {
-        CategoryType parsed;
-
-        try {
-            parsed = CategoryType.valueOf(category.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return Page.empty(pageable);
-        }
-
-        return eventRepository.findByCategory(parsed, pageable);
     }
 
     // post /api/events
