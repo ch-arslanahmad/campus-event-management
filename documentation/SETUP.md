@@ -5,10 +5,10 @@
 ```shell
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 
-The app runs on `http://localhost:3000`
+The app runs on `http://localhost:5173`
 
 ## Backend Setup
 
@@ -24,28 +24,53 @@ Java 21 and the Maven wrapper (`./mvnw`) are all you need.
 
 ### 2. Configure Database
 
-The backend talks to MySQL. Create the database and the application user once,
-as an admin:
+The backend needs a working MySQL server.
 
-```sql
-CREATE DATABASE campus_events;
-CREATE USER 'campus'@'localhost' IDENTIFIED BY 'campus123';
-GRANT ALL PRIVILEGES ON campus_events.* TO 'campus'@'localhost';
-```
-
-Load the schema and the demo data (both live in `backend/database/`):
+Easiest method: run this from the
+`backend` directory:
 
 ```shell
-mysql -u campus -p campus_events < backend/database/schema.sql
-mysql -u campus -p campus_events < backend/database/seed.sql
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS campus_events; CREATE USER IF NOT EXISTS 'campus'@'localhost' IDENTIFIED BY 'campus123'; ALTER USER 'campus'@'localhost' IDENTIFIED BY 'campus123'; GRANT ALL PRIVILEGES ON campus_events.* TO 'campus'@'localhost'; FLUSH PRIVILEGES;"
 ```
 
-`seed.sql` loads 100 users, 555 events and 1000 registrations, and is
-re-runnable (it clears the three tables first). `schema.sql` is not: it uses
-`CREATE TABLE IF NOT EXISTS`, so after a schema change drop the database and
-reload both files.
+This creates the database and local `campus` user automatically. No interactive MySQL shell needed.
 
-The connection defaults live in `src/main/resources/application.properties`:
+If you prefer the interactive MySQL shell, run:
+
+```shell
+sudo mysql
+```
+
+Then paste this SQL and type `exit`:
+
+```sql
+CREATE DATABASE IF NOT EXISTS campus_events;
+CREATE USER IF NOT EXISTS 'campus'@'localhost' IDENTIFIED BY 'campus123';
+ALTER USER 'campus'@'localhost' IDENTIFIED BY 'campus123';
+GRANT ALL PRIVILEGES ON campus_events.* TO 'campus'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Now load the schema. This creates the tables. Run this command from the `backend` directory:
+
+```shell
+mysql -u campus -p campus_events < database/schema.sql
+```
+
+Enter `campus123` when MySQL asks for the password.
+
+Load the demo data next:
+
+```shell
+mysql -u campus -p campus_events < database/seed.sql
+```
+
+- `schema.sql` creates the tables.
+- `seed.sql` loads 100 users, 555 events and 1000 registrations. The seed is re-runnable because it clears the three tables first.
+
+The schema is not re-runnable after structural changes; drop the database and reload both files when needed.
+
+The (backend) connection defaults live in `src/main/resources/application.properties`:
 
 ```
 spring.datasource.url=jdbc:mysql://localhost:3306/campus_events
@@ -54,28 +79,64 @@ spring.datasource.password=campus123
 spring.jpa.hibernate.ddl-auto=none
 ```
 
-`APP_DB_URL`, `APP_DB_USER`, `APP_DB_PASSWORD` and `APP_DB_DIALECT` override
-them. `ddl-auto=none` is deliberate: `schema.sql` owns the schema, Hibernate
-never runs DDL.
+`APP_DB_URL`, `APP_DB_USER`, `APP_DB_PASSWORD` and `APP_DB_DIALECT` override them.
 
-### 3. Build and Run
+> [!note]
+> `ddl-auto=none` is deliberate: `schema.sql` owns the schema, Hibernate never runs DDL.
+
+### 3. Build and Run Backend
+
+Keep the terminal in the `backend` directory:
 
 ```
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
 
-Backend runs on `http://localhost:8080`
+Spring Boot reads the database URL, username and password from `src/main/resources/application.properties`, then connects to the database created above. Backend runs on `http://localhost:8080`.
+
+### MySQL Shell Quick Reference
+
+Open the application database directly:
+
+```shell
+mysql -u campus -p campus_events
+```
+
+Useful commands:
+
+```sql
+SHOW TABLES;
+SELECT COUNT(*) FROM events;
+SELECT COUNT(*) FROM users;
+SELECT COUNT(*) FROM registrations;
+exit
+```
+
+### Manage Database with a GUI
+
+MySQL Workbench and DBeaver can manage the same database without using the
+shell. Create a connection with these values:
+
+| Setting  | Value           |
+| -------- | --------------- |
+| Host     | `localhost`     |
+| Port     | `3306`          |
+| User     | `campus`        |
+| Password | `campus123`     |
+| Database | `campus_events` |
+
+Open a SQL editor in the GUI. Run `database/schema.sql` first, then `database/seed.sql`. Refresh the `campus_events` connection to browse tables and rows.
 
 ### 4. Demo Accounts
 
 Every seeded account uses the password `Demo@12345` (stated in `seed.sql`):
 
-| Role | Email |
-|---|---|
-| Admin | `ayesha.khan.admin@gmail.com` |
-| Admin | `hamza.malik.admin@outlook.com` |
-| Student | `sidra.butt@gmail.com` |
+| Role    | Email                           |
+| ------- | ------------------------------- |
+| Admin   | `ayesha.khan.admin@gmail.com`   |
+| Admin   | `hamza.malik.admin@outlook.com` |
+| Student | `sidra.butt@gmail.com`          |
 
 Public signup always creates a `STUDENT`; admin accounts come from the seed.
 
@@ -116,13 +177,11 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full workflow (issue → branc
 **Port Already in Use:**
 
 - Backend: Change port in `application.properties` with `server.port=8081`
-- Frontend: `PORT=3001 npm start`
+- Frontend: `npm run dev -- --port 3001`
 
 **CORS Issues:**
 
-CORS (Cross-Origin Resource Sharing) issues may arise when the frontend and backend are on different ports. To resolve:
-
-- Add CORS configuration in Spring Boot controller or use `@CrossOrigin`
+CORS is already configured for the local frontend at `http://localhost:5173` in `CorsConfig.java`. If the frontend uses another port, update the allowed origin there.
 
 **Build Errors:**
 
