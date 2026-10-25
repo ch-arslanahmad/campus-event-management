@@ -34,6 +34,12 @@ campus-event-management/
 │   └── adr/
 │       ├── 0001-spring-boot-backend.md
 │       └── 0002-jwt-in-httponly-cookies.md
+├── .github/
+│   ├── CODEOWNERS
+│   ├── pull_request_template.md
+│   └── workflows/
+│       ├── ci.yml
+│       └── opencode.yml
 ├── screenshots/
 ├── README.md
 ├── CONTRIBUTING.md
