@@ -7,7 +7,7 @@ export default function Login() {
   const navigate = useNavigate(), location = useLocation(), { login } = useAuth()
   const submit = async (event) => {
     event.preventDefault(); setError(''); setBusy(true)
-    try { const user = await login(form); navigate(user.role === 'admin' ? '/dashboard' : '/my-events') } catch (reason) { setError(reason.message) } finally { setBusy(false) }
+    try { const user = await login(form); navigate(location.state?.from || (user.role === 'admin' ? '/dashboard' : '/my-events')) } catch (reason) { setError(reason.message) } finally { setBusy(false) }
   }
   return <section className="section login"><div className="login__card"><h1>Log in</h1>{location.state?.registered && <p className="success">Account created. Log in to continue.</p>}<form onSubmit={submit}>
     <label>Email<input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@university.edu" /></label>

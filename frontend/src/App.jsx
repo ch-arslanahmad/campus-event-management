@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
@@ -6,6 +7,7 @@ import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import Events from './pages/Events.jsx'
 import Admin from './pages/Admin.jsx'
+import EventEditor from './pages/EventEditor.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import EventDetails from './pages/EventDetails.jsx'
 import MyEvents from './pages/MyEvents.jsx'
@@ -14,6 +16,9 @@ import NotFound from './pages/NotFound.jsx'
 
 export default function App() {
   const { pathname } = useLocation()
+  // A new route starts at the top; without this, navigating from a scrolled
+  // dashboard opens the editor halfway down the form.
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return (
     <>
       <Navbar />
@@ -25,6 +30,8 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/events/new" element={<EventEditor />} />
+          <Route path="/dashboard/events/:eventId/edit" element={<EventEditor />} />
           <Route path="/my-events" element={<MyEvents />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
