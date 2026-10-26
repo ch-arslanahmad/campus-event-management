@@ -1,21 +1,20 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { register } from '../assets/auth.js'
+import { useAuth } from '../assets/AuthContext.jsx'
 
 export default function Signup() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { signup } = useAuth()
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     if (!form.name.trim() || !form.email.trim()) return setError('Enter your name and email.')
     if (form.password.length < 6) return setError('Password must be at least 6 characters.')
     if (form.password !== form.confirm) return setError('Passwords do not match.')
-    const err = register(form)
-    if (err) return setError(err)
-    navigate('/login', { state: { registered: true } })
+    try { await signup({ name: form.name, email: form.email, password: form.password }); navigate('/my-events') } catch (reason) { setError(reason.message) }
   }
 
   return (

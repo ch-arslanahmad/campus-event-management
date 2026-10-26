@@ -3,17 +3,17 @@ import { categories } from '../assets/eventsData.js'
 import { Link } from 'react-router-dom'
 
 export default function EventCard({ event }) {
-  const c = categories[event.category]
+  const c = categories[String(event.category).toLowerCase()] ?? categories.seminar
   return (
     <article className="event-card" style={{ '--accent': c.color }}>
       <Photo src={c.photo} fallback={c.img} alt="" className="event-card__img" />
       <div className="event-card__body">
         <span className="tag">{c.label}</span>
         <h3>{event.title}</h3>
-        <p>{event.desc}</p>
+        <p>{event.description ?? event.desc}</p>
         <ul className="event-card__meta">
           <li>{event.date} at {event.time}</li>
-          <li>{event.venue}</li>
+          <li>{event.location ?? event.venue}</li>
         </ul>
         <Link className="btn btn--outline btn--small" to={`/event?id=${event.id}`}>View & register</Link>
       </div>

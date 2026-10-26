@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CategoryCard from '../components/CategoryCard.jsx'
 import EventCard from '../components/EventCard.jsx'
 import Reveal from '../components/Reveal.jsx'
 import { categories } from '../assets/eventsData.js'
-import { getEvents } from '../assets/data.js'
+import { listEvents } from '../api/events.js'
 import Photo from '../components/Photo.jsx'
 import { useAuth } from '../assets/AuthContext.jsx'
 
@@ -16,6 +16,8 @@ const uol4 = new URL('../assets/photos/uol-4.jpg', import.meta.url).href
 export default function Home() {
   const heroRef = useRef(null)
   const { user } = useAuth()
+  const [featured, setFeatured] = useState([])
+  useEffect(() => { listEvents({ featured: true, size: 3 }).then((result) => setFeatured(result.content)).catch(() => setFeatured([])) }, [])
 
   // Parallax: hero artwork and shapes drift at different speeds while scrolling
   useEffect(() => {
@@ -90,7 +92,7 @@ export default function Home() {
         <div className="container">
           <Reveal from="left"><h2>Coming up soon</h2></Reveal>
           <div className="grid grid--3">
-            {getEvents().slice(0, 3).map((e, i) => (
+            {featured.map((e, i) => (
               <Reveal key={e.id} delay={i * 140}><EventCard event={e} /></Reveal>
             ))}
           </div>
