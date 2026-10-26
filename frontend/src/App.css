@@ -249,7 +249,11 @@ form input:focus { border-color: var(--blue); outline: none; }
 .back-link:hover { transform: translateX(-4px); color: var(--blue); }
 .detail-layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 30px; align-items: start; }
 .detail-card, .registration-card, .state-card, .registration-item { border-radius: 24px; background: var(--white); box-shadow: 0 14px 40px rgba(20,24,58,.1); }
-.detail-card { padding: clamp(28px, 5vw, 58px); position: relative; overflow: hidden; }
+.detail-card { padding: 0; position: relative; overflow: hidden; }
+.detail-card__banner { display: block; height: clamp(190px, 24vw, 250px); object-fit: cover; width: 100%; }
+/* the SVG fallbacks are 3:2 illustrations, so cover would crop them */
+.detail-card__banner[src$=".svg"] { background: var(--white); object-fit: contain; }
+.detail-card__body { padding: clamp(24px, 4.5vw, 52px); }
 .detail-card::after { content: ''; height: 8px; background: var(--accent); position: absolute; inset: 0 0 auto; }
 .detail-card h1 { margin: 14px 0; }
 .event-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 34px; }
@@ -308,7 +312,7 @@ form input:focus { border-color: var(--blue); outline: none; }
 }
 @media (max-width: 680px) {
   .event-facts, .registration-grid { grid-template-columns: 1fr; }
-  .detail-card, .registration-card, .state-card { padding: 24px; }
+  .detail-card__body, .registration-card, .state-card { padding: 24px; }
   .profile-card { align-items: flex-start; flex-wrap: wrap; padding: 24px; }
   .role-badge { margin-left: 0; }
   .profile-layout { grid-template-columns: 1fr; }
