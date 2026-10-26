@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -71,7 +72,13 @@ public class RegistrationController {
             admin,
             eventId,
             userId,
-            PageQuery.toPageable(page, size)
+            PageQuery.toPageable(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "registeredAt").and(
+                    Sort.by(Sort.Direction.DESC, "id")
+                )
+            )
         );
 
         // names only for admins; a student response stays anonymous

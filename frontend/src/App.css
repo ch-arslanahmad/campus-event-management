@@ -79,6 +79,11 @@ img { max-width: 100%; display: block; }
 .search { margin-left: auto; padding: 10px 18px; border-radius: 999px; border: 2px solid #C9CDEB; font: 400 .95rem 'DM Sans'; min-width: 220px; }
 .empty { color: var(--muted); padding: 40px 0; }
 .result-count { color: var(--muted); font-weight: 700; margin: -16px 0 22px; }
+.pagination { align-items: center; display: flex; gap: 16px; justify-content: center; margin-top: 32px; }
+.pagination button:disabled { cursor: not-allowed; opacity: .45; transform: none; }
+.checkbox { align-items: center; display: flex; gap: 10px; }
+.checkbox input { display: inline-block; margin: 0; width: auto; }
+.admin-list-heading { margin: 40px 0 18px; }
 
 /* Login */
 .login { background: var(--bg); min-height: 70vh; display: grid; place-items: center; }
@@ -244,7 +249,11 @@ form input:focus { border-color: var(--blue); outline: none; }
 .back-link:hover { transform: translateX(-4px); color: var(--blue); }
 .detail-layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 30px; align-items: start; }
 .detail-card, .registration-card, .state-card, .registration-item { border-radius: 24px; background: var(--white); box-shadow: 0 14px 40px rgba(20,24,58,.1); }
-.detail-card { padding: clamp(28px, 5vw, 58px); position: relative; overflow: hidden; }
+.detail-card { padding: 0; position: relative; overflow: hidden; }
+.detail-card__banner { display: block; height: clamp(190px, 24vw, 250px); object-fit: cover; width: 100%; }
+/* the SVG fallbacks are 3:2 illustrations, so cover would crop them */
+.detail-card__banner[src$=".svg"] { background: var(--white); object-fit: contain; }
+.detail-card__body { padding: clamp(24px, 4.5vw, 52px); }
 .detail-card::after { content: ''; height: 8px; background: var(--accent); position: absolute; inset: 0 0 auto; }
 .detail-card h1 { margin: 14px 0; }
 .event-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 34px; }
@@ -303,7 +312,7 @@ form input:focus { border-color: var(--blue); outline: none; }
 }
 @media (max-width: 680px) {
   .event-facts, .registration-grid { grid-template-columns: 1fr; }
-  .detail-card, .registration-card, .state-card { padding: 24px; }
+  .detail-card__body, .registration-card, .state-card { padding: 24px; }
   .profile-card { align-items: flex-start; flex-wrap: wrap; padding: 24px; }
   .role-badge { margin-left: 0; }
   .profile-layout { grid-template-columns: 1fr; }
@@ -318,5 +327,6 @@ form input:focus { border-color: var(--blue); outline: none; }
 .admin-content { min-width: 0; }.admin-heading { align-items: start; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 28px; }.admin-heading h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); }.admin-heading .lead { margin-bottom: 0; }
 .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 26px; }.metrics article, .admin-panel { background: var(--white); border-radius: 18px; box-shadow: 0 10px 30px rgba(20,24,58,.08); padding: 22px; }.metrics span { color: var(--muted); display: block; font-weight: 700; font-size: .85rem; }.metrics strong { color: var(--blue); display: block; font: 800 2.2rem 'Bricolage Grotesque', sans-serif; margin-top: 4px; }
 .admin-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }.admin-panel h2 { font-size: 1.35rem; margin-bottom: 14px; }.admin-panel > p { border-top: 1px solid #E4E6F7; display: grid; gap: 3px; padding: 13px 0; }.admin-panel span { color: var(--muted); font-size: .9rem; }.registration-admin-list { margin-top: 26px; }.admin-filters { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0 14px; }.admin-filters .search { margin: 0; }.admin-filters select { background: var(--white); border: 2px solid #C9CDEB; border-radius: 999px; font: 500 .95rem 'DM Sans', sans-serif; padding: 10px 16px; }.table-cue { color: var(--muted); display: none; font-size: .85rem; font-weight: 700; margin-bottom: 8px; }.status { border-radius: 999px; font-size: .8rem; font-weight: 800; padding: 5px 10px; }.status--upcoming { background: #DDF7EE; color: #0B6B4F; }.status--full { background: #FFE4E1; color: #C62828; }
+.admin-toolbar { align-items: center; display: flex; justify-content: space-between; gap: 24px; margin: 32px 0 24px; }.admin-toolbar h2 { font-size: 1.35rem; margin: 0 0 5px; }.admin-toolbar p { color: var(--muted); }.admin-create { align-items: center; display: inline-flex; gap: 9px; white-space: nowrap; }.admin-create span { align-items: center; background: rgba(255,255,255,.2); border-radius: 50%; display: inline-flex; font-size: 1.35rem; height: 22px; justify-content: center; line-height: 1; width: 22px; }.event-editor__card { margin: 0 auto; width: min(820px, 100%); }.event-editor__card h1 { font-size: clamp(2rem, 4vw, 2.8rem); margin: 6px 0 0; }.event-editor__card .lead { margin: 12px 0 26px; }.event-editor__actions .btn { min-width: 170px; text-align: center; }.event-editor__error { display: grid; gap: 18px; justify-items: start; }
 @media (max-width: 960px) { .admin-layout { grid-template-columns: 1fr; gap: 24px; }.admin-nav { position: static; }.admin-nav nav { display: flex; overflow-x: auto; }.admin-nav button { white-space: nowrap; }.metrics { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 680px) { .admin-heading, .admin-panels { grid-template-columns: 1fr; display: grid; }.metrics { grid-template-columns: 1fr 1fr; }.admin-heading .btn { width: 100%; text-align: center; }.admin-filters .search { width: 100%; }.table-cue { display: block; } }
+@media (max-width: 680px) { .admin-heading, .admin-panels { grid-template-columns: 1fr; display: grid; }.metrics { grid-template-columns: 1fr 1fr; }.admin-heading .btn { width: 100%; text-align: center; }.admin-toolbar { align-items: stretch; flex-direction: column; }.admin-create { justify-content: center; }.event-editor__card { padding: 24px 18px; }.event-editor__actions { flex-direction: column-reverse; }.event-editor__actions .btn { min-width: 0; width: 100%; }.event-editor__card .lead { font-size: 1.05rem; }.admin-filters .search { width: 100%; }.table-cue { display: block; } }

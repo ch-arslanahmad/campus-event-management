@@ -1,44 +1,102 @@
-import { useState } from 'react'
-import { Navigate, Link } from 'react-router-dom'
-import { categories } from '../assets/eventsData.js'
-import { getEvents, getRegistrations, createEvent, updateEvent, deleteEvent, getEventById } from '../assets/data.js'
-import { eventCapacity, eventStatus, validateCapacity } from '../assets/adminRules.js'
-import { getCurrentUser } from '../assets/auth.js'
+import { useEffect, useState } from 'react'
+import { Link, Navigate, useLocation } from 'react-router-dom'
+import { deleteEvent, getEvent, listEvents } from '../api/events.js'
+import { listRegistrations } from '../api/registrations.js'
+import { useAuth } from '../assets/AuthContext.jsx'
 
-const empty = { title: '', category: 'seminar', date: '', time: '', venue: '', desc: '', capacity: 100 }
-const tabs = ['Overview', 'Events', 'Registrations', 'Profile']
-const inputDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : new Date(`${value}, ${new Date().getFullYear()}`).toISOString().slice(0, 10)
-const inputTime = (value) => /^\d{2}:\d{2}$/.test(value) ? value : new Date(`1970-01-01 ${value}`).toTimeString().slice(0, 5)
+const today = () => new Date().toISOString().slice(0, 10)
+const PAGE_SIZE = 8
 
-function Form({ form, setForm, editingId, onSubmit, onCancel, error }) {
-  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
-  return <div className="admin__form-card" id="event-form"><h2>{editingId ? 'Edit event' : 'Create event'}</h2><form onSubmit={onSubmit} className="admin__form">
-    <label>Title<input required value={form.title} onChange={set('title')} placeholder="Event name" /></label><label>Category<select value={form.category} onChange={set('category')}>{Object.entries(categories).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>
-    <label>Date<input required type="date" value={form.date} onChange={set('date')} /></label><label>Time<input required type="time" value={form.time} onChange={set('time')} /></label>
-    <label>Venue<input required value={form.venue} onChange={set('venue')} placeholder="Main Auditorium" /></label><label>Capacity<input required min="1" step="1" type="number" value={form.capacity} onChange={set('capacity')} /></label>
-    <label className="admin__wide">Description<textarea rows="3" value={form.desc} onChange={set('desc')} placeholder="Short description of the event" /></label>{error && <p className="error admin__wide" role="alert">{error}</p>}<div className="admin__actions admin__wide"><button className="btn btn--primary">{editingId ? 'Save changes' : 'Create event'}</button>{editingId && <button className="btn btn--outline" type="button" onClick={onCancel}>Cancel</button>}</div>
-  </form></div>
+export default function Admin() {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+  const [tablePage, setTablePage] = useState({ content: [], page: 0, size: PAGE_SIZE, totalElements: 0, totalPages: 0, first: true, last: true })
+  const [summary, setSummary] = useState([])
+  const [page, setPage] = useState(0)
+  const [upcoming, setUpcoming] = useState([])
+  const [registrations, setRegistrations] = useState([])
+  const [activityTitles, setActivityTitles] = useState({})
+  const [totals, setTotals] = useState({ events: 0, registrations: 0, upcoming: 0 })
+  const [message, setMessage] = useState(location.state?.notice || '')
+  const [error, setError] = useState('')
+  const [ready, setReady] = useState(false)
+
+  // Seat utilisation and the upcoming count need every event this admin owns,
+  // but the list endpoint caps `size` at 100 (ADR-0003), so walk the pages.
+  const loadAllEvents = async () => {
+    const content = []
+    let pageIndex = 0
+    let last = false
+    while (!last) {
+      const result = await listEvents({ createdBy: user.id, page: pageIndex, size: 100 })
+      content.push(...result.content)
+      last = result.last
+      pageIndex += 1
+    }
+    return content
+  }
+
+  const load = async (targetPage = page) => {
+    if (!user?.id) return
+    try {
+      const [eventPage, registrationPage, allEvents] = await Promise.all([
+        listEvents({ createdBy: user.id, page: targetPage, size: PAGE_SIZE }),
+        listRegistrations({ size: 4 }),
+        loadAllEvents(),
+      ])
+      setTablePage(eventPage)
+      setSummary(allEvents)
+      setRegistrations(registrationPage.content)
+      const activityEvents = await Promise.allSettled(
+        registrationPage.content.map((registration) => getEvent(registration.eventId))
+      )
+      setActivityTitles(Object.fromEntries(activityEvents
+        .filter((result) => result.status === 'fulfilled')
+        .map((result) => [result.value.id, result.value.title])))
+      const now = today()
+      const upcomingEvents = allEvents
+        .filter((event) => event.date >= now)
+        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
+      setUpcoming(upcomingEvents.slice(0, 4))
+      setTotals({
+        events: eventPage.totalElements,
+        registrations: registrationPage.totalElements,
+        upcoming: upcomingEvents.length,
+      })
+      setError('')
+      setReady(true)
+    } catch (reason) { setError(reason.message) }
+  }
+
+  useEffect(() => {
+    const initialLoad = async () => { await load(page) }
+    void initialLoad()
+    // Reload when the identity or the visible page changes; load() reads both.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, page])
+
+  if (loading) return null
+  if (!user || user.role !== 'admin') return <Navigate to="/login" replace />
+
+  const remove = async (id) => {
+    if (!window.confirm('Delete this event?')) return
+    try {
+      await deleteEvent(id); setMessage('Event deleted.')
+      // Deleting the only row on a page would leave it empty; step back instead.
+      if (tablePage.content.length === 1 && page > 0) setPage(page - 1); else await load(page)
+    } catch (reason) { setError(reason.message) }
+  }
+  const totalCapacity = summary.reduce((sum, event) => sum + event.capacity, 0)
+  const totalRegistered = summary.reduce((sum, event) => sum + event.registeredCount, 0)
+  const utilisation = totalCapacity ? Math.round(totalRegistered / totalCapacity * 100) : 0
+  const titleById = new Map(summary.map((event) => [event.id, event.title]))
+  const activityTitle = (eventId) => activityTitles[eventId] || titleById.get(eventId) || `Event #${eventId}`
+
+  return <section className="section admin-workspace"><div className="container"><p className="eyebrow">Administrator</p><h1>Event hub</h1>{message && <p className="success" role="status">{message}</p>}{error && <p className="error" role="alert">{error}</p>}
+    <div className="metrics"><article><span>Your events</span><strong>{totals.events}</strong></article><article><span>Upcoming</span><strong>{totals.upcoming}</strong></article><article><span>Registrations</span><strong>{totals.registrations}</strong></article><article><span>Seat utilisation</span><strong>{utilisation}%</strong></article></div>
+    <div className="admin-toolbar"><div><h2>Manage events</h2><p>Create an event or update one of your existing listings.</p></div><Link to="/dashboard/events/new" className="btn btn--primary admin-create"><span aria-hidden="true">+</span> Create event</Link></div>
+    <div className="admin-panels"><article className="admin-panel"><h2>Upcoming events</h2>{upcoming.slice(0, 4).map((event) => <p key={event.id}><strong>{event.title}</strong><span>{event.date} · {event.time}</span></p>)}{!upcoming.length && <p className="empty">No upcoming events.</p>}</article><article className="admin-panel"><h2>Recent activity on your events</h2>{registrations.map((registration) => <p key={registration.id}><strong>{registration.userName || 'Student'} joined</strong><span>{activityTitle(registration.eventId)} · {registration.registeredAt?.slice(0, 10) || 'recently'}</span></p>)}{!registrations.length && <p className="empty">No registrations yet.</p>}</article></div>
+    <h2 className="admin-list-heading">Your events</h2><div className="admin__table-wrap"><table className="admin__table"><thead><tr><th>Event</th><th>Schedule</th><th>Registrations</th><th>Seats left</th><th>Actions</th></tr></thead><tbody>{tablePage.content.map((event) => <tr key={event.id}><td><strong>{event.title}</strong><br /><small>{event.category}</small></td><td>{event.date}<br />{event.time}</td><td>{event.registeredCount} / {event.capacity}</td><td>{Math.max(event.capacity - event.registeredCount, 0)}</td><td className="admin__row-actions"><Link className="btn btn--outline btn--small" to={`/dashboard/events/${event.id}/edit`}>Edit</Link><button className="btn btn--danger btn--small" onClick={() => remove(event.id)}>Delete</button></td></tr>)}{!tablePage.content.length && <tr><td className="empty" colSpan="5">{ready ? 'No events yet. Use Create event to add your first one.' : 'Loading your events…'}</td></tr>}</tbody></table></div>
+    {tablePage.totalPages > 1 && <nav className="pagination" aria-label="Your events pages"><button className="btn btn--outline btn--small" disabled={tablePage.first} onClick={() => setPage(page - 1)}>Previous</button><span>Page {tablePage.page + 1} of {tablePage.totalPages}</span><button className="btn btn--outline btn--small" disabled={tablePage.last} onClick={() => setPage(page + 1)}>Next</button></nav>}
+  </div></section>
 }
-
-function Panel() {
-  const [list, setList] = useState(getEvents()), [registrations] = useState(getRegistrations()), [tab, setTab] = useState('Overview')
-  const [form, setForm] = useState(empty), [editingId, setEditingId] = useState(null), [error, setError] = useState(''), [message, setMessage] = useState('')
-  const [query, setQuery] = useState(''), [category, setCategory] = useState('all'), [status, setStatus] = useState('all')
-  const count = (id) => registrations.filter((item) => String(item.eventId) === String(id)).length
-  const upcoming = list.filter((event) => eventStatus(event, count(event.id)) === 'Upcoming')
-  const utilisation = list.length ? Math.round((registrations.length / list.reduce((total, event) => total + eventCapacity(event), 0)) * 100) : 0
-  const visible = list.filter((event) => (event.title.toLowerCase().includes(query.toLowerCase()) || String(event.date).includes(query)) && (category === 'all' || event.category === category) && (status === 'all' || eventStatus(event, count(event.id)).toLowerCase() === status))
-  const reset = () => { setForm(empty); setEditingId(null); setError('') }
-  const showEvents = () => { setTab('Events'); reset(); setTimeout(() => document.getElementById('event-form')?.scrollIntoView({ behavior: 'smooth' }), 0) }
-  const submit = (e) => { e.preventDefault(); const capacityError = validateCapacity(form.capacity, editingId ? count(editingId) : 0); if (capacityError) return setError(capacityError); const data = { ...form, capacity: Number(form.capacity) }; setList(editingId ? updateEvent(editingId, data) : createEvent(data)); setMessage(editingId ? 'Event updated.' : 'Event created.'); reset() }
-  const edit = (event) => { setEditingId(event.id); setForm({ title: event.title, category: event.category, date: inputDate(event.date), time: inputTime(event.time), venue: event.venue, desc: event.desc ?? '', capacity: eventCapacity(event) }); setTab('Events'); setTimeout(() => document.getElementById('event-form')?.scrollIntoView({ behavior: 'smooth' }), 0) }
-  const remove = (event) => { const result = deleteEvent(event.id); if (result.error) return setError(result.error); setList(result.list); setMessage('Event deleted.'); if (editingId === event.id) reset() }
-  return <section className="section admin-workspace"><div className="container"><div className="admin-layout"><aside className="admin-nav"><p className="eyebrow">Administrator</p><h2>Event hub</h2><nav aria-label="Admin sections">{tabs.map((item) => <button key={item} className={tab === item ? 'is-active' : ''} onClick={() => setTab(item)}>{item}</button>)}</nav></aside><div className="admin-content">
-    {message && <p className="success" role="status">{message}</p>}{error && tab !== 'Events' && <p className="error" role="alert">{error}</p>}
-    {tab === 'Overview' && <><div className="admin-heading"><div><p className="eyebrow">Overview</p><h1>Campus events at a glance</h1><p className="lead">Keep registrations, capacity and upcoming activity moving.</p></div><div className="admin__actions"><button className="btn btn--primary" onClick={showEvents}>Create event</button><button className="btn btn--outline" onClick={() => setTab('Events')}>Manage events</button></div></div><div className="metrics"><article><span>Total events</span><strong>{list.length}</strong></article><article><span>Upcoming events</span><strong>{upcoming.length}</strong></article><article><span>Total registrations</span><strong>{registrations.length}</strong></article><article><span>Seat utilisation</span><strong>{utilisation}%</strong></article></div><div className="admin-panels"><article className="admin-panel"><h2>Upcoming events</h2>{upcoming.slice(0, 4).map((event) => <p key={event.id}><strong>{event.title}</strong><span>{event.date} · {event.time}</span></p>)}{!upcoming.length && <p className="empty">No upcoming events.</p>}</article><article className="admin-panel"><h2>Recent registration activity</h2>{registrations.slice(-4).reverse().map((item) => <p key={item.id}><strong>{item.name}</strong><span>joined {getEventById(item.eventId)?.title ?? 'a removed event'}</span></p>)}{!registrations.length && <p className="empty">No registrations yet.</p>}</article></div></>}
-    {tab === 'Events' && <><div className="admin-heading"><div><p className="eyebrow">Events management</p><h1>Plan and manage events</h1></div><button className="btn btn--outline" onClick={reset}>New event</button></div><Form {...{ form, setForm, editingId, onSubmit: submit, onCancel: reset, error }} /><div className="admin-filters"><input className="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search events or dates" /><select value={category} onChange={(e) => setCategory(e.target.value)}><option value="all">All categories</option>{Object.entries(categories).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All statuses</option><option value="upcoming">Upcoming</option><option value="full">Full</option></select></div><p className="table-cue">Swipe to see actions →</p><div className="admin__table-wrap"><table className="admin__table"><thead><tr><th>Event</th><th>Category</th><th>Schedule</th><th>Registrations</th><th>Seats left</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visible.map((event) => { const registrationsForEvent = count(event.id); const eventState = eventStatus(event, registrationsForEvent); return <tr key={event.id}><td><strong>{event.title}</strong></td><td>{categories[event.category]?.label}</td><td>{event.date}<br />{event.time}</td><td>{registrationsForEvent} / {eventCapacity(event)}</td><td>{Math.max(eventCapacity(event) - registrationsForEvent, 0)}</td><td><span className={`status status--${eventState.toLowerCase()}`}>{eventState}</span></td><td className="admin__row-actions"><button className="btn btn--outline btn--small" onClick={() => edit(event)}>Edit</button><button className="btn btn--danger btn--small" onClick={() => remove(event)}>Delete</button></td></tr> })}</tbody></table></div></>}
-    {tab === 'Registrations' && <><p className="eyebrow">Registrations</p><h1>Student registrations</h1><div className="admin-panel registration-admin-list">{registrations.length ? registrations.slice().reverse().map((item) => <p key={item.id}><strong>{item.name}</strong><span>{item.email} · {getEventById(item.eventId)?.title ?? 'Event unavailable'}</span></p>) : <p className="empty">No registrations yet.</p>}</div></>}
-    {tab === 'Profile' && <><p className="eyebrow">Settings</p><h1>Admin profile</h1><div className="admin-panel"><h2>Dr. Ayesha Khan</h2><p>Events Administrator · Student Affairs</p><p className="form-note">Profile editing will be connected to the backend account service.</p><Link className="btn btn--outline" to="/profile">View profile</Link></div></>}
-  </div></div></div></section>
-}
-export default function Admin() { const user = getCurrentUser(); return !user || user.role !== 'admin' ? <Navigate to="/login?role=admin" replace /> : <Panel /> }
