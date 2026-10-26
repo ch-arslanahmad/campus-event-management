@@ -16,8 +16,8 @@ export function AuthProvider({ children }) {
   }, [])
   const value = useMemo(() => ({
     user, loading,
-    async login(credentials) { const result = await auth.login(credentials); const next = normalize(result.user ?? await auth.currentUser()); setUser(next); return next },
-    signup: auth.signup,
+    async login(credentials) { const result = await auth.login(credentials); const next = normalize(result); setUser(next); return next },
+    async signup(details) { const result = await auth.signup(details); const next = normalize(result); setUser(next); return next },
     async logout() { try { await auth.logout() } finally { setUser(null) } },
   }), [user, loading])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
