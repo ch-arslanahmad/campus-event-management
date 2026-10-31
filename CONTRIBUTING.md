@@ -77,6 +77,16 @@ Issue #3 (Add login form)
   → Issue #3 closed automatically
 ```
 
+### 6. CI checks
+
+Every PR into `main` runs `.github/workflows/ci.yml`. A PR can only be merged once it is green:
+
+- **PR links an issue** - the description must contain a `Closes #<number>` line, otherwise this check fails.
+- **Backend** - `./mvnw verify` against a fresh MySQL 8.4 loaded with `schema.sql` and `seed.sql`.
+- **Frontend** - `npm ci`, `npm run lint`, `npm test`, `npm run build`.
+
+Run the same commands locally before pushing; a red PR is the reviewer's first thing to see.
+
 ## Best Practices
 
 - One issue = one branch = one PR. Keep them small and focused.

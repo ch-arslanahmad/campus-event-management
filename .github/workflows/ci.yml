@@ -1,0 +1,113 @@
+name: CI
+
+# Runs on every PR into main, so a broken build is caught before review instead
+# of after merge. main itself is protected, so there is no push trigger.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # CONTRIBUTING.md step 3: every PR links the issue it closes. GitHub only
+  # auto-closes an issue when the body contains a keyword ("Closes #12");
+  # nothing enforces that the line is there, which is what this checks.
+  pr-issue-link:
+    name: PR links an issue
+    # 1 vCPU container runner: enough for a script that reads one string, and it
+    # starts far quicker than a full 4 vCPU VM. No Docker on these runners, so
+    # the build jobs below stay on ubuntu-latest.
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const linked = /\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\b[^\n]*#\d+/i.test(body);
+            if (!linked) {
+              core.setFailed(
+                'PR body has no linked issue. Add a line such as "Closes #12" ' +
+                '(see CONTRIBUTING.md, step 3).'
+              );
+            }
+
+  backend:
+    name: Backend (build + tests)
+    runs-on: ubuntu-latest
+    services:
+      # The only test boots the full application, so it needs a real MySQL
+      # instance with the schema in place - same image as compose.yaml.
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: campus_events
+          MYSQL_USER: campus
+          MYSQL_PASSWORD: campus123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      APP_DB_URL: jdbc:mysql://127.0.0.1:3306/campus_events
+      APP_DB_USER: campus
+      APP_DB_PASSWORD: campus123
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      # Service containers cannot mount the init scripts, so load them the
+      # same way the mysql image would: schema.sql first, then seed.sql.
+      - name: Load schema and demo data
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/backend/database:/sql:ro" \
+            mysql:8.4 sh -c \
+            'mysql -h127.0.0.1 -uroot -proot < /sql/schema.sql &&
+             mysql -h127.0.0.1 -uroot -proot < /sql/seed.sql'
+
+      - name: Build and test
+        working-directory: backend
+        run: ./mvnw -B -ntp verify
+
+  frontend:
+    name: Frontend (lint + tests + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

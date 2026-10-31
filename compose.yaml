@@ -29,6 +29,16 @@ services:
       APP_DB_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "8080:8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -fsS http://localhost:8080/actuator/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
     depends_on:
       db:
         condition: service_healthy

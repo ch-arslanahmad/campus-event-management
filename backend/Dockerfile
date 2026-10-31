@@ -22,7 +22,7 @@ RUN ./mvnw -B -DskipTests package
 
 FROM eclipse-temurin:21-jre AS runtime
 
-# curl for the Docker healthcheck; remove the apt list cache so the layer stays small
+# curl for compose healthcheck
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
@@ -42,9 +42,6 @@ USER appuser
 # document the port the application listens on
 EXPOSE 8080
 
-# healthprobe waits until Spring Boot has connected to MySQL and starts up
-HEALTHCHECK --interval=15s --timeout=3s --retries=3 --start-period=40s \
-  CMD curl -fsS http://localhost:8080/actuator/health || exit 1
 
 # start the spring boot application when the container starts
 ENTRYPOINT ["java", "-jar", "app.jar"]
