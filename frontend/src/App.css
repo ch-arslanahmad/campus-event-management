@@ -108,6 +108,10 @@ form input:focus { border-color: var(--blue); outline: none; }
 .footer__copy { text-align: center; margin-top: 48px; font-size: .85rem; opacity: .7; }
 
 /* Responsive */
+@media (max-width: 1040px) {
+  .filters { flex-direction: column; align-items: stretch; gap: 14px; }
+  .search { margin-left: 0; width: 100%; min-width: 0; }
+}
 @media (max-width: 960px) {
   .grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid--3 { grid-template-columns: repeat(2, 1fr); }
