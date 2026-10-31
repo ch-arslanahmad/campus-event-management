@@ -19,6 +19,12 @@ test('401 on the boot restore is not treated as expiry', async () => {
   await assert.rejects(() => api('/auth/me'), ApiError)
   assert.equal(hits(), 0)
 })
+test('bad credentials on login are not treated as expiry', async () => {
+  stub(401, { message: 'Invalid email or password' })
+  const hits = track()
+  await assert.rejects(() => api('/auth/login', { method: 'POST', body: '{}' }), /Invalid email or password/)
+  assert.equal(hits(), 0)
+})
 test('204 resolves to null', async () => {
   stub(204, null)
   assert.equal(await api('/registrations/1', { method: 'DELETE' }), null)

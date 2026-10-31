@@ -2,9 +2,11 @@ export class ApiError extends Error {
   constructor(status, message, fields) { super(message); this.status = status; this.fields = fields }
 }
 
-// A 401 anywhere except the boot restore means the cookie expired mid-session.
+// A 401 anywhere except the auth endpoints means the cookie expired mid-session.
+// /auth/me is the boot restore, where 401 means "logged out"; /auth/login and
+// /auth/register return 401 for bad credentials, which is not an expiry.
 // AuthProvider registers the reset, so no page has to handle it.
-const BOOT_PATH = '/auth/me'
+const NOT_EXPIRY = new Set(['/auth/me', '/auth/login', '/auth/register', '/auth/logout'])
 let onUnauthorized = () => {}
 export const setUnauthorizedHandler = (handler) => { onUnauthorized = handler }
 
@@ -14,7 +16,7 @@ export async function api(path, options = {}) {
   if (response.status === 204) return null
   const body = await response.json().catch(() => null)
   if (!response.ok) {
-    if (response.status === 401 && path !== BOOT_PATH) onUnauthorized()
+    if (response.status === 401 && !NOT_EXPIRY.has(path)) onUnauthorized()
     throw new ApiError(response.status, body?.message ?? 'Something went wrong. Please try again.', body?.fields)
   }
   return body
