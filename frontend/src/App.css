@@ -70,7 +70,7 @@ img { max-width: 100%; display: block; }
 .event-card__body h3 { font-size: 1.3rem; }
 .event-card__body p { color: var(--muted); font-size: .96rem; }
 .event-card__meta { list-style: none; font-size: .92rem; font-weight: 500; margin-top: auto; padding-bottom: 6px; }
-.tag { background: var(--accent); color: var(--ink); font-size: .8rem; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
+.tag { background: var(--accent); color: var(--ink); font-size: .85rem; font-weight: 700; padding: 4px 14px; border-radius: 999px; }
 
 /* Events page */
 .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 36px; }
@@ -108,6 +108,10 @@ form input:focus { border-color: var(--blue); outline: none; }
 .footer__copy { text-align: center; margin-top: 48px; font-size: .85rem; opacity: .7; }
 
 /* Responsive */
+@media (max-width: 1280px) {
+  .filters { flex-direction: column; align-items: stretch; gap: 14px; }
+  .search { margin-left: 0; width: 100%; min-width: 0; }
+}
 @media (max-width: 1040px) {
   .filters { flex-direction: column; align-items: stretch; gap: 14px; }
   .search { margin-left: 0; width: 100%; min-width: 0; }
