@@ -17,27 +17,34 @@ Serves at http://localhost:5173.
 - `npm run build` production build into `dist/`
 - `npm run preview` preview the build
 - `npm run lint` run ESLint
+- `npm test` run the unit tests (`node --test`)
 
 ## Routes
 
 - `/` home page
 - `/events` all events, optional `?category=`
-- `/event?id=1` standalone event details and demo registration
-- `/login` login, optional `?role=admin`
+- `/event?id=1` standalone event details and student registration
+- `/login` login
 - `/signup` sign up
 - `/dashboard` protected admin dashboard
+- `/dashboard/events/new`, `/dashboard/events/:eventId/edit` admin event editor
 - `/my-events` protected student registrations page
-- `/profile` protected role-aware demo profile
+- `/profile` protected profile: name, email and role
 - `/admin` legacy admin dashboard route, admins only
 
 ## Data and auth
 
-Events and registrations pass through `src/assets/data.js`, which currently uses
-demo data and `localStorage` so it can be replaced by API calls later. Login and
-sign up are also demo-only and stored in `localStorage`.
+Everything goes through `src/api/` (`client.js` plus one module per resource).
+Calls are relative `/api` only: Vite proxies it in dev, nginx proxies it in
+Docker, so no `VITE_API_URL` is needed. The JWT lives in the `HttpOnly`
+`jwt_token` cookie, which the browser attaches automatically; the frontend never
+sees a token and sends `credentials: 'include'` on every call.
 
-The credentials below are development seeds, not production credentials. They
-must move to server-side authentication with hashed passwords before deployment:
+The session is restored on boot from `GET /api/auth/me`. A `401` from any other
+call means the cookie expired mid-session: the client clears the user and
+redirects to `/login`.
 
-- Student: `student@campus.com` / `student123`
-- Admin: `admin@campus.com` / `admin123`
+The credentials below are development seeds, not production credentials:
+
+- Student: `sidra.butt@gmail.com` / `Demo@12345`
+- Admin: `ayesha.khan.admin@gmail.com` / `Demo@12345`

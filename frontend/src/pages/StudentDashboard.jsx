@@ -1,29 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { categories } from '../assets/eventsData.js'
-import { cancelRegistration, getEventById, getRegistrations } from '../assets/data.js'
+import { cancelRegistration, listRegistrations } from '../api/registrations.js'
+import { getEvent } from '../api/events.js'
+import { categoryFor } from '../assets/eventsData.js'
 
 export default function StudentDashboard({ user }) {
-  const [registrations, setRegistrations] = useState(() => getRegistrations().filter((item) => item.email === user.email))
-  const cancel = (id) => {
-    if (!window.confirm('Cancel this registration?')) return
-    cancelRegistration(id)
-    setRegistrations(getRegistrations().filter((item) => item.email === user.email))
-  }
-
-  return <section className="section dashboard"><div className="container">
-    <p className="eyebrow">Student account</p><h1>My events</h1>
-    <p className="lead">Welcome back, {user.name}. Keep track of every event you have joined.</p>
-    {!registrations.length ? <div className="state-card"><h2>Nothing on your calendar yet</h2><p>Discover an event that sparks your interest and reserve your place.</p><Link to="/events" className="btn btn--primary">Explore events</Link></div> : <div className="registration-grid">{registrations.map((registration) => {
-      const event = getEventById(registration.eventId)
-      const category = event && categories[event.category]
-      return <article className="registration-item" key={registration.id}>
-        <span className="tag" style={{ '--accent': category?.color }}>{category?.label ?? 'Campus event'}</span>
-        <h2>{event?.title ?? `Campus event #${registration.eventId}`}</h2>
-        {event ? <p>{event.date} · {event.time}<br />{event.venue}</p> : <p>Your registration is confirmed.</p>}
-        <small>Registered {new Date(registration.registrationDate).toLocaleDateString()}</small>
-        <button className="text-button" onClick={() => cancel(registration.id)}>Cancel registration</button>
-      </article>
-    })}</div>}
-  </div></section>
+  const [items, setItems] = useState([]); const [error, setError] = useState('')
+  const load = async () => { try { const registrations = await listRegistrations({ size: 100 }); const unique = [...new Set(registrations.content.map((row) => row.eventId))]; const events = await Promise.all(unique.map((id) => getEvent(id))); const byId = new Map(events.map((event) => [event.id, event])); setItems(registrations.content.map((registration) => ({ registration, event: byId.get(registration.eventId) }))); setError('') } catch (reason) { setError(reason.message) } }
+  useEffect(() => { let cancelled = false; const initialLoad = async () => { try { const registrations = await listRegistrations({ size: 100 }); const unique = [...new Set(registrations.content.map((row) => row.eventId))]; const events = await Promise.all(unique.map((id) => getEvent(id))); const byId = new Map(events.map((event) => [event.id, event])); if (!cancelled) { setItems(registrations.content.map((registration) => ({ registration, event: byId.get(registration.eventId) }))); setError('') } } catch (reason) { if (!cancelled) setError(reason.message) } }; void initialLoad(); return () => { cancelled = true } }, [])
+  const cancel = async (id) => { if (!window.confirm('Cancel this registration?')) return; try { await cancelRegistration(id); await load() } catch (reason) { setError(reason.message) } }
+  return <section className="section dashboard"><div className="container"><p className="eyebrow">Student account</p><h1>My events</h1><p className="lead">Welcome back, {user.name}. Keep track of every event you have joined.</p>{error && <p className="error" role="alert">{error}</p>}{!items.length && !error ? <div className="state-card"><h2>You have not registered for any events yet.</h2><Link to="/events" className="btn btn--primary">Explore events</Link></div> : <div className="registration-grid">{items.map(({ registration, event }) => { const category = categoryFor(event?.category); return <article className="registration-item" key={registration.id}><span className="tag" style={{ '--accent': category.color }}>{category.label}</span><h2>{event?.title ?? `Campus event #${registration.eventId}`}</h2><p>{event ? `${event.date} · ${event.time}\n${event.location}` : 'Event details unavailable.'}</p><button className="text-button" onClick={() => cancel(registration.id)}>Cancel registration</button></article> })}</div>}</div></section>
 }

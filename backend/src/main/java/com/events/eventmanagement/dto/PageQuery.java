@@ -19,6 +19,10 @@ public final class PageQuery {
     private PageQuery() {}
 
     public static Pageable toPageable(int page, int size) {
+        return toPageable(page, size, Sort.by(Sort.Direction.DESC, "id"));
+    }
+
+    public static Pageable toPageable(int page, int size, Sort sort) {
         if (page < 0) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -35,6 +39,6 @@ public final class PageQuery {
 
         // explicit sort: page boundaries must not depend on storage order, or
         // consecutive pages overlap and skip rows
-        return PageRequest.of(page, size, Sort.by("id"));
+        return PageRequest.of(page, size, sort);
     }
 }

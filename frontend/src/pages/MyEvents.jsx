@@ -1,10 +1,4 @@
-import StudentDashboard from './StudentDashboard.jsx'
 import { Navigate } from 'react-router-dom'
-import { getCurrentUser } from '../assets/auth.js'
-
-export default function MyEvents() {
-  const user = getCurrentUser()
-  if (!user) return <Navigate to="/login" replace />
-  if (user.role === 'admin') return <Navigate to="/dashboard" replace />
-  return <StudentDashboard user={user} />
-}
+import { useAuth } from '../assets/AuthContext.jsx'
+import StudentDashboard from './StudentDashboard.jsx'
+export default function MyEvents() { const { user, loading } = useAuth(); if (loading) return null; if (!user) return <Navigate to="/login" replace />; return user.role === 'admin' ? <Navigate to="/dashboard" replace /> : <StudentDashboard user={user} /> }
