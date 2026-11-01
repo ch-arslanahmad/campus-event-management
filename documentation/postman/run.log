@@ -36,4 +36,4 @@ SELECT COUNT(*) FROM registrations WHERE id=1002; -- 0 after cleanup
 
 Temporary event and registration were removed. After the Newman run, DB counts were again 555 events, 1000 registrations, and 100 users; no temporary event title remained.
 
-Limitations: browser automation permission was declined, so new visual/manual screenshots were not captured. Existing screenshots/events.png, screenshots/login.png, and screenshots/admin-dashboard.jpg are present; login screenshot shows a placeholder account and should be refreshed when browser access is approved.
+Visual evidence was supplied by the user and is saved in `screenshots/events-list-evidence.png`, `screenshots/login-form-evidence.png`, and `screenshots/admin-dashboard-evidence.png`. Browser automation permission remained blocked, so I reviewed the supplied images rather than capturing them. They show desktop layouts; responsive checks at 1440/1280/680/mobile widths remain unverified.
