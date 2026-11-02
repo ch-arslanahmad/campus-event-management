@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../assets/AuthContext.jsx'
 import Logo from './Logo.jsx'
 
@@ -7,11 +7,10 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const bar = useRef(null)
   const header = useRef(null)
-  useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const close = () => setOpen(false)
-  const signOut = () => { logout(); close(); navigate('/') }
+  const signOut = async () => { await logout(); close(); navigate('/') }
 
   // Scroll progress bar + shadow once the page is scrolled
   useEffect(() => {
@@ -35,17 +34,15 @@ export default function Navbar() {
         <Link to="/" className="brand" onClick={close}>
           <Logo /> University of Lahore
         </Link>
-        <button className="navbar__toggle" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} onClick={() => setOpen(!open)}>
-          <span className="hamburger-icon" aria-hidden="true"><i /><i /><i /></span>
-          <span className="sr-only">{open ? 'Close' : 'Menu'}</span>
+        <button className="navbar__toggle" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? 'Close' : 'Menu'}
         </button>
         <nav className={`navbar__links ${open ? 'is-open' : ''}`}>
           <NavLink to="/" end onClick={close}>Home</NavLink>
           <NavLink to="/events" onClick={close}>Events</NavLink>
-          {user && <NavLink to={user.role === 'admin' ? '/dashboard' : '/my-events'} onClick={close}>{user.role === 'admin' ? 'Dashboard' : 'My events'}</NavLink>}
+          {user?.role === 'admin' && <NavLink to="/admin" onClick={close}>Dashboard</NavLink>}
           {user ? (
             <>
-              <NavLink to="/profile" onClick={close}>Profile</NavLink>
               <span className="navbar__user">Hi, {user.name}{user.role === 'admin' ? ' (admin)' : ''}</span>
               <button className="btn btn--outline btn--small" onClick={signOut}>Log out</button>
             </>
