@@ -26,16 +26,15 @@ From PowerShell at the repo root, run baseline counts:
 docker compose exec -T db mysql -ucampus -pcampus123 campus_events -e "SELECT COUNT(*) AS events FROM events; SELECT COUNT(*) AS registrations FROM registrations; SELECT COUNT(*) AS users FROM users;"
 ```
 
-The checked-in evidence uses seeded IDs so the SQL is runnable as-is:
+Then run the verification script, which prints a PASS/FAIL verdict for every check:
 
-```sql
-SELECT id, created_by, title, capacity, category FROM events WHERE id = 1;
-SELECT id, user_id, event_id FROM registrations WHERE id = 1;
-SELECT COUNT(*) FROM events WHERE id = 1;
-SELECT COUNT(*) FROM registrations WHERE id = 1;
+```shell
+docker compose exec -T db mysql -ucampus -pcampus123 campus_events < documentation/postman/database-checks.sql
 ```
 
-Exact checks performed in this run are recorded in `run.log` and `database-checks.sql`. The SQL file is executable as-is and uses seeded IDs 1 for the event and registration checks.
+It covers seed counts and edge-case rows, referential integrity (orphans, duplicate registrations, oversubscription), schema constraint enforcement (run in a rolled-back transaction, so no data changes), and cleanup of the temporary rows from the recorded run. The last recorded output is in `database-checks-output.txt` (34/34 checks passed).
+
+For a new run, set `@event_id` and `@registration_id` at the top of section 5 to the ids returned by the API, and add the row checks for those ids as shown in `run.log`.
 
 ## Headless run
 
@@ -45,8 +44,8 @@ If Newman is installed:
 newman run "Campus Events API.postman_collection.json" -e "Campus Events Local.postman_environment.json" --reporters cli,json --reporter-json-export results.json
 ```
 
-The collection includes checks related to the overlong text backend bug tracked in [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43). Retain terminal output and `results.json` for headless execution evidence.
+The collection includes checks related to the overlong text backend bug in `BUG-REPORT-DRAFT.md`; fix/report it before treating the run as fully passing. Retain terminal output and `results.json` for headless execution evidence.
 
 ## Findings
 
-`../API.md` lists the observed contract. 201-character `title` and `location` values currently return 500 instead of a client validation response; this is tracked in [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43).
+`../API.md` lists the observed contract. 201-character `title` and `location` values currently return 500 instead of a client validation response. See `BUG-REPORT-DRAFT.md`.
