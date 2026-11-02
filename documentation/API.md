@@ -33,4 +33,4 @@ Base URL: `http://localhost:8080`. JSON requests and responses use `application/
 
 ## Error handling and findings
 
-Malformed JSON and missing required event fields return 400. Long title/location values (201 characters, beyond the schema's 200-character columns) currently produce 500 with `Unexpected server error.` and no SQL details. See `documentation/postman/BUG-REPORT-DRAFT.md`.
+Malformed JSON and missing required event fields return 400. Long title/location values (201 characters, beyond the schema's 200-character columns) currently produce 500 with `Unexpected server error.` and no SQL details. See [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43).

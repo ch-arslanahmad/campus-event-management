@@ -26,16 +26,16 @@ From PowerShell at the repo root, run baseline counts:
 docker compose exec -T db mysql -ucampus -pcampus123 campus_events -e "SELECT COUNT(*) AS events FROM events; SELECT COUNT(*) AS registrations FROM registrations; SELECT COUNT(*) AS users FROM users;"
 ```
 
-For each created event/registration use its response id:
+The checked-in evidence uses seeded IDs so the SQL is runnable as-is:
 
 ```sql
-SELECT id, created_by, title, capacity, category FROM events WHERE id = <eventId>;
-SELECT id, user_id, event_id FROM registrations WHERE id = <registrationId>;
-SELECT COUNT(*) FROM events WHERE id = <eventId>;
-SELECT COUNT(*) FROM registrations WHERE id = <registrationId>;
+SELECT id, created_by, title, capacity, category FROM events WHERE id = 1;
+SELECT id, user_id, event_id FROM registrations WHERE id = 1;
+SELECT COUNT(*) FROM events WHERE id = 1;
+SELECT COUNT(*) FROM registrations WHERE id = 1;
 ```
 
-Exact checks performed in this run are recorded in `run.log` and `database-checks.sql`.
+Exact checks performed in this run are recorded in `run.log` and `database-checks.sql`. The SQL file is executable as-is and uses seeded IDs 1 for the event and registration checks.
 
 ## Headless run
 
@@ -45,8 +45,8 @@ If Newman is installed:
 newman run "Campus Events API.postman_collection.json" -e "Campus Events Local.postman_environment.json" --reporters cli,json --reporter-json-export results.json
 ```
 
-The collection includes checks related to the overlong text backend bug in `BUG-REPORT-DRAFT.md`; fix/report it before treating the run as fully passing. Retain terminal output and `results.json` for headless execution evidence.
+The collection includes checks related to the overlong text backend bug tracked in [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43). Retain terminal output and `results.json` for headless execution evidence.
 
 ## Findings
 
-`../API.md` lists the observed contract. 201-character `title` and `location` values currently return 500 instead of a client validation response. See `BUG-REPORT-DRAFT.md`.
+`../API.md` lists the observed contract. 201-character `title` and `location` values currently return 500 instead of a client validation response; this is tracked in [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43).
