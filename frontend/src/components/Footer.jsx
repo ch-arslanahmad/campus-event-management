@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 import { categories } from '../assets/eventsData.js'
+import { useAuth } from '../assets/AuthContext.jsx'
 import Logo from './Logo.jsx'
 
 export default function Footer() {
+  const { user } = useAuth()
+
   return (
     <footer className="footer">
       <div className="container footer__inner">
@@ -18,8 +21,9 @@ export default function Footer() {
         </div>
         <div>
           <h4>Account</h4>
-          <Link to="/login">User login</Link>
-          <Link to="/login?role=admin">Admin login</Link>
+          {!user && <><Link to="/login">User login</Link><Link to="/signup">Create account</Link></>}
+          {user?.role === 'user' && <><Link to="/my-events">My events</Link><Link to="/profile">Profile</Link></>}
+          {user?.role === 'admin' && <><Link to="/dashboard">Dashboard</Link><Link to="/profile">Profile</Link></>}
         </div>
       </div>
       <p className="footer__copy">© {new Date().getFullYear()} University of Lahore. All rights reserved.</p>
