@@ -1,0 +1,50 @@
+Campus Event Management database checks
+Executed: 2026-11-03
+Environment: Docker Compose MySQL 8.4, fresh seed (`docker compose down -v`), database campus_events
+
+$ docker compose exec -T db mysql -ucampus -pcampus123 campus_events --table < documentation/postman/database-checks.sql
++--------------+------------------------------------------------+--------+----------+---------+
+| section      | check_name                                     | actual | expected | verdict |
++--------------+------------------------------------------------+--------+----------+---------+
+| seed         | admin users count                              | 5      | 5        | PASS    |
+| seed         | events count                                   | 555    | 555      | PASS    |
+| seed         | registrations count                            | 1000   | 1000     | PASS    |
+| seed         | users count                                    | 100    | 100      | PASS    |
+| integrity    | duplicate (user_id, event_id) pairs            | 0      | 0        | PASS    |
+| integrity    | events over capacity                           | 0      | 0        | PASS    |
+| integrity    | events with capacity <= 0                      | 0      | 0        | PASS    |
+| integrity    | events with missing creator                    | 0      | 0        | PASS    |
+| integrity    | events with unknown category                   | 0      | 0        | PASS    |
+| integrity    | registrations with missing event               | 0      | 0        | PASS    |
+| integrity    | registrations with missing user                | 0      | 0        | PASS    |
+| edge case    | admin user 5 created no events                 | 0      | 0        | PASS    |
+| edge case    | event 10 title length                          | 200    | 200      | PASS    |
+| edge case    | event 18 description is NULL                   | NULL   | NULL     | PASS    |
+| edge case    | event 24 description is empty string           | empty  | empty    | PASS    |
+| edge case    | event 3 sold out (registrations/capacity)      | 20/20  | 20/20    | PASS    |
+| edge case    | event 8 nearly full (registrations/capacity)   | 24/25  | 24/25    | PASS    |
+| edge case    | event 9 has no registrations                   | 0      | 0        | PASS    |
+| edge case    | user 6 registrations                           | 45     | 45       | PASS    |
+| edge case    | user 7 registrations                           | 1      | 1        | PASS    |
+| edge case    | users 99 and 100 have no registrations         | 0      | 0        | PASS    |
+| constraint   | duplicate email rejected                       | 1062   | 1062     | PASS    |
+| constraint   | duplicate registration rejected                | 1062   | 1062     | PASS    |
+| constraint   | event delete with registrations rejected       | 1451   | 1451     | PASS    |
+| constraint   | event with missing creator rejected            | 1452   | 1452     | PASS    |
+| constraint   | invalid category rejected                      | 3819   | 3819     | PASS    |
+| constraint   | NULL title rejected                            | 1048   | 1048     | PASS    |
+| constraint   | registration with missing event rejected       | 1452   | 1452     | PASS    |
+| constraint   | registration with missing user rejected        | 1452   | 1452     | PASS    |
+| constraint   | zero capacity rejected                         | 3819   | 3819     | PASS    |
+| recorded run | duplicate registrations for one user and event | 0      | 0        | PASS    |
+| recorded run | leftover temporary QA events                   | 0      | 0        | PASS    |
+| recorded run | registrations on temporary QA events           | 0      | 0        | PASS    |
+| recorded run | rows over the 200-char column limit            | 0      | 0        | PASS    |
++--------------+------------------------------------------------+--------+----------+---------+
++--------------+--------+--------+-------------------+
+| total_checks | passed | failed | result            |
++--------------+--------+--------+-------------------+
+|           34 |     34 |      0 | ALL CHECKS PASSED |
++--------------+--------+--------+-------------------+
+
+Result: 34 checks, 34 passed, 0 failed (ALL CHECKS PASSED).

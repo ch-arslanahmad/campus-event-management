@@ -32,9 +32,11 @@ Then run the verification script, which prints a PASS/FAIL verdict for every che
 docker compose exec -T db mysql -ucampus -pcampus123 campus_events < documentation/postman/database-checks.sql
 ```
 
-It covers seed counts and edge-case rows, referential integrity (orphans, duplicate registrations, oversubscription), schema constraint enforcement (run in a rolled-back transaction, so no data changes), and cleanup of the temporary rows from the recorded run. The last recorded output is in `database-checks-output.txt` (34/34 checks passed).
+It covers seed counts and edge-case rows, referential integrity (orphans, duplicate registrations, oversubscription), schema constraint enforcement (run in a rolled-back transaction, so no data changes), and residue from API runs. The last recorded output is in `database-checks-output.txt` (34/34 checks passed on a fresh seed).
 
-For a new run, set `@event_id` and `@registration_id` at the top of section 5 to the ids returned by the API, and add the row checks for those ids as shown in `run.log`.
+The script reads live data, so it needs no per-run ids. Run it before a collection run for a clean baseline: the collection inserts one account, and the seed user count check only passes on a fresh seed (`docker compose down -v`).
+
+`compose.yaml` publishes MySQL on host port 3307 as well as the container port, so a desktop SQL client can connect to `127.0.0.1:3307`; everything above still runs inside the container and does not need that mapping.
 
 ## Headless run
 
@@ -44,8 +46,12 @@ If Newman is installed:
 newman run "Campus Events API.postman_collection.json" -e "Campus Events Local.postman_environment.json" --reporters cli,json --reporter-json-export results.json
 ```
 
-The collection includes checks related to the overlong text backend bug in `BUG-REPORT-DRAFT.md`; fix/report it before treating the run as fully passing. Retain terminal output and `results.json` for headless execution evidence.
+The recorded run is 44 requests and 46 assertions, all passing. `run.log` holds the database checks, the Newman summary and the database state after the run; `results.json` is the machine-readable export with session-cookie values redacted. Retain both for execution evidence.
+
+## Frontend checks
+
+`../QA-REPORT.md` covers the browser side. `../qa/frontend-smoke.cjs` reproduces it: Playwright drives search, filters, pagination, registration, protected routes, admin CRUD, admin filters and a 376px viewport, then prints PASS/FAIL per check.
 
 ## Findings
 
-`../API.md` lists the observed contract. 201-character `title` and `location` values currently return 500 instead of a client validation response. See `BUG-REPORT-DRAFT.md`.
+`../API.md` lists the observed contract. The 500 on 201-character `title`/`location` is fixed: the API now returns 400 with a field message, and the collection asserts it.

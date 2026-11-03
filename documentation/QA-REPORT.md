@@ -1,33 +1,34 @@
-# Frontend manual QA
+# Frontend QA
 
-**Date:** 2026-11-02  
-**Environment:** Local Docker Compose stack at `http://localhost:5173`; seeded demo accounts.  
+**Date:** 2026-11-03  
+**Environment:** Local Docker Compose stack at `http://localhost:5173` (fresh `docker compose down -v` seed); seeded demo accounts.  
 **Scope:** Search, category filters, pagination, registration and cancellation, protected routes, administrator event CRUD and filters, and responsive layouts.
 
 ## Results
 
 | Area | Result | Observation |
 | --- | --- | --- |
-| Search | Pass | Searching `Resume and LinkedIn Clinic` returned 4 matching events. |
-| Category filter | Pass | Selecting Workshops updated the URL to `?category=WORKSHOP` and returned 111 workshops. Combining the earlier search with Workshops showed the expected empty state. |
-| Pagination | Partial | Opening `/events?page=1` returned results 13–24 and showed page 2 of 47. Repeatedly activating the visible Next button left the URL and page unchanged in this browser session, so button-driven pagination did not pass manual verification. |
-| Registration | Pass | A student registered for the temporary QA event; the detail page showed the success message and available seats changed from 25 to 24. The event appeared in My events after its data loaded. |
-| Cancellation | Pass | The student cancelled that registration; My events no longer listed it and the event detail page returned to 25 available seats. |
+| Search | Pass | Searching `Resume and LinkedIn Clinic` returned 4 matching events and dropped the `page` parameter, so the result set starts at page 1. |
+| Category filter | Pass | Selecting Workshops updated the URL to `?category=WORKSHOP` and returned 111 workshops. |
+| Pagination | Pass | Next advanced to `/events?page=1` (the URL page index is zero-based) showing results 13–24 and `Page 2 of 47`. Previous returns to page 1 and is disabled there. |
+| Registration | Pass | A student registered for `Street Food Carnival - Fall 2026`; the detail page showed `You’re registered for Street Food Carnival - Fall 2026.` |
+| Cancellation | Pass | The student cancelled that registration from My events after confirming the dialog; the event no longer appeared in the list. |
 | Protected routes | Pass | A guest opening `/dashboard/events/new` was redirected to `/login`. A student opening `/dashboard` was redirected to `/my-events`. |
-| Administrator create/edit | Pass | Created event 562 through the event form, edited its title, and saw the updated title on the dashboard and event detail page. |
-| Administrator delete | Pass | Created a temporary event, registered a student for it, and confirmed the UI rejected the delete with "Event has registrations and cannot be deleted." After cancelling the registration, deleting through the UI succeeded and the event stayed gone after a reload. |
-| Administrator filters | Not available | The administrator dashboard lists events in a paginated table but exposes no search or filter controls. |
-| Responsive layouts | Partial pass | The public event list was viewed at 376 × 504 and 1250 × 710. The narrow view used the collapsed menu and a single-column event card layout; the wider view showed the multi-column grid. Administrator layouts were not checked at narrow width. |
+| Administrator create/edit | Pass | Created an event through the form, saw the `Event created.` notice, and the new title appeared in the admin table. |
+| Administrator delete | Pass | Deleting that event (no registrations) asked for confirmation, showed `Event deleted.`, and the row disappeared. Deleting an event with registrations is still rejected with `Event has registrations and cannot be deleted.` |
+| Administrator filters | Pass | The dashboard exposes category chips, status chips and a search box. Searching an impossible term gives `0–0 of 0 events`; `Clear filters` restores `1–8 of 133 events`. |
+| Responsive layouts | Pass | Public list and admin dashboard were checked at 376 × 504 and 1250 × 710. Neither page scrolls horizontally at 376px (`scrollWidth - innerWidth` was 0). |
+
+The measurements above come from a scripted Chromium run, not a hand-driven session: `documentation/qa/frontend-smoke.cjs` prints a PASS/FAIL line per check. It needs Playwright installed ad hoc (`npm install --no-save playwright && npx playwright install chromium`) and a running stack.
 
 ## Automated checks
 
 - `npm run lint`, `npm test` (8 tests), and `npm run build` pass locally.
-- The Postman collection (44 requests, 46 assertions) and the database checks (34 checks) are recorded in `documentation/postman/`.
+- The Postman collection (44 requests, 46 assertions) passes in full against the current backend; see `documentation/postman/run.log`.
+- The database checks (34 checks, 34 passed) run on a fresh seed and leave no rows behind; output in `documentation/postman/database-checks-output.txt`.
 
 ## Follow-up
 
-- Investigate the Next button: in the observed session, direct navigation to page 2 worked while repeated activation of the visible button did not advance the page (tracked in #49).
-- Decide whether administrator list filters are required; there are no such controls in the current dashboard (tracked in #48).
-- Finish responsive coverage for the administrator layouts (tracked in #50).
-- Overlong title/location currently return 500 instead of 400 (tracked in #43).
-
+- Playwright is not a project dependency, so the smoke script only runs after the ad hoc install above. Add it to `frontend/package.json` if it should run in CI.
+- The URL page index is zero-based while the label is one-based (`?page=1` shows `Page 2`). This is consistent with the API but easy to misread; leave as is unless deep links matter.
+- Overlong title/location now returns 400 with a field message (#43), covered by the Postman collection.

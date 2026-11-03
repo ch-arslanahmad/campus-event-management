@@ -1,41 +1,292 @@
-Campus Event Management database evidence
-Executed: 2026-11-02
-Environment: Docker Compose MySQL 8.4, database campus_events
+Campus Event Management verification log
+Executed: 2026-11-03
+Environment: Docker Compose stack reset with `docker compose down -v`
+  MySQL 8.4 (localhost via `docker compose exec db`), backend http://localhost:8080,
+  frontend http://localhost:5173
+
+Result: database checks 34/34 PASS; Postman/Newman 44/44 requests and 46/46 assertions
+pass; no temporary events, registrations or over-limit rows left behind.
+
+== 1. Database checks on the fresh seed ==
 
 $ docker compose exec -T db mysql -ucampus -pcampus123 campus_events --table < documentation/postman/database-checks.sql
-mysql: [Warning] Using a password on the command line interface can be insecure.
-+--------+
-| events |
-+--------+
-|    557 |
-+--------+
-+---------------+
-| registrations |
-+---------------+
-|          1000 |
-+---------------+
-+-------+
-| users |
-+-------+
-|   100 |
-+-------+
-+----+------------+----------------------------------------------+----------+----------+
-| id | created_by | title                                        | capacity | category |
-+----+------------+----------------------------------------------+----------+----------+
-|  1 |          3 | Introduction to Machine Learning - Fall 2026 |      120 | SEMINAR  |
-+----+------------+----------------------------------------------+----------+----------+
-+----+---------+----------+
-| id | user_id | event_id |
-+----+---------+----------+
-|  1 |      13 |      411 |
-+----+---------+----------+
-+--------------+
-| event_exists |
-+--------------+
-|            1 |
-+--------------+
-+---------------------+
-| registration_exists |
-+---------------------+
-|                   1 |
-+---------------------+
++--------------+------------------------------------------------+--------+----------+---------+
+| section      | check_name                                     | actual | expected | verdict |
++--------------+------------------------------------------------+--------+----------+---------+
+| seed         | admin users count                              | 5      | 5        | PASS    |
+| seed         | events count                                   | 555    | 555      | PASS    |
+| seed         | registrations count                            | 1000   | 1000     | PASS    |
+| seed         | users count                                    | 100    | 100      | PASS    |
+| integrity    | duplicate (user_id, event_id) pairs            | 0      | 0        | PASS    |
+| integrity    | events over capacity                           | 0      | 0        | PASS    |
+| integrity    | events with capacity <= 0                      | 0      | 0        | PASS    |
+| integrity    | events with missing creator                    | 0      | 0        | PASS    |
+| integrity    | events with unknown category                   | 0      | 0        | PASS    |
+| integrity    | registrations with missing event               | 0      | 0        | PASS    |
+| integrity    | registrations with missing user                | 0      | 0        | PASS    |
+| edge case    | admin user 5 created no events                 | 0      | 0        | PASS    |
+| edge case    | event 10 title length                          | 200    | 200      | PASS    |
+| edge case    | event 18 description is NULL                   | NULL   | NULL     | PASS    |
+| edge case    | event 24 description is empty string           | empty  | empty    | PASS    |
+| edge case    | event 3 sold out (registrations/capacity)      | 20/20  | 20/20    | PASS    |
+| edge case    | event 8 nearly full (registrations/capacity)   | 24/25  | 24/25    | PASS    |
+| edge case    | event 9 has no registrations                   | 0      | 0        | PASS    |
+| edge case    | user 6 registrations                           | 45     | 45       | PASS    |
+| edge case    | user 7 registrations                           | 1      | 1        | PASS    |
+| edge case    | users 99 and 100 have no registrations         | 0      | 0        | PASS    |
+| constraint   | duplicate email rejected                       | 1062   | 1062     | PASS    |
+| constraint   | duplicate registration rejected                | 1062   | 1062     | PASS    |
+| constraint   | event delete with registrations rejected       | 1451   | 1451     | PASS    |
+| constraint   | event with missing creator rejected            | 1452   | 1452     | PASS    |
+| constraint   | invalid category rejected                      | 3819   | 3819     | PASS    |
+| constraint   | NULL title rejected                            | 1048   | 1048     | PASS    |
+| constraint   | registration with missing event rejected       | 1452   | 1452     | PASS    |
+| constraint   | registration with missing user rejected        | 1452   | 1452     | PASS    |
+| constraint   | zero capacity rejected                         | 3819   | 3819     | PASS    |
+| recorded run | duplicate registrations for one user and event | 0      | 0        | PASS    |
+| recorded run | leftover temporary QA events                   | 0      | 0        | PASS    |
+| recorded run | registrations on temporary QA events           | 0      | 0        | PASS    |
+| recorded run | rows over the 200-char column limit            | 0      | 0        | PASS    |
++--------------+------------------------------------------------+--------+----------+---------+
++--------------+--------+--------+-------------------+
+| total_checks | passed | failed | result            |
++--------------+--------+--------+-------------------+
+|           34 |     34 |      0 | ALL CHECKS PASSED |
++--------------+--------+--------+-------------------+
+
+
+== 2. Postman collection run (Newman 6.2.3) ==
+
+$ cd documentation/postman
+$ newman run "Campus Events API.postman_collection.json" \
+    -e "Campus Events Local.postman_environment.json" \
+    --reporters cli,json --reporter-json-export results.json
+
+newman
+
+Campus Events API
+
+❏ Auth
+↳ Current user requires cookie
+  GET http://localhost:8080/api/auth/me [401 Unauthorized, 512B, 47ms]
+  ✓  anonymous request returns 401
+
+↳ Anonymous mutation returns 401
+  POST http://localhost:8080/api/events [401 Unauthorized, 512B, 14ms]
+  ✓  anonymous mutation returns 401
+
+↳ Tampered cookie returns 401
+  GET http://localhost:8080/api/auth/me [401 Unauthorized, 512B, 105ms]
+  ✓  tampered cookie returns 401
+
+↳ Login as admin
+  POST http://localhost:8080/api/auth/login [200 OK, 760B, 236ms]
+  ✓  login is 200
+  ✓  admin role returned
+  ✓  HttpOnly cookie set, no token in body
+
+↳ Current user from cookie
+  GET http://localhost:8080/api/auth/me [200 OK, 505B, 52ms]
+  ✓  current user is admin
+
+↳ Bad credentials return generic 401
+  POST http://localhost:8080/api/auth/login [401 Unauthorized, 508B, 17ms]
+  ✓  generic unauthorized response
+
+↳ Register new account
+  POST http://localhost:8080/api/auth/register [201 Created, 785B, 194ms]
+  ✓  registration succeeds
+
+↳ Duplicate email returns 409
+  POST http://localhost:8080/api/auth/register [409 Conflict, 499B, 163ms]
+  ✓  duplicate email returns 409
+
+↳ Logout
+  POST http://localhost:8080/api/auth/logout [200 OK, 566B, 9ms]
+  ✓  logout clears cookie
+
+↳ Current user after logout
+  GET http://localhost:8080/api/auth/me [401 Unauthorized, 512B, 4ms]
+  ✓  logout invalidates session
+
+❏ Events
+↳ Login as admin for event checks
+  POST http://localhost:8080/api/auth/login [200 OK, 760B, 78ms]
+  ✓  admin login
+
+↳ List 12 public events
+  GET http://localhost:8080/api/events?page=0&size=12 [200 OK, 4.32kB, 20ms]
+  ✓  page size and 555 seeded events
+
+↳ Get public event 1
+  GET http://localhost:8080/api/events/1 [200 OK, 778B, 14ms]
+  ✓  event found
+
+↳ Missing event returns 404
+  GET http://localhost:8080/api/events/999999 [404 Not Found, 508B, 8ms]
+  ✓  missing event
+
+↳ Login as student
+  POST http://localhost:8080/api/auth/login [200 OK, 757B, 75ms]
+  ✓  student login
+
+↳ Student cannot create event
+  POST http://localhost:8080/api/events [403 Forbidden, 496B, 5ms]
+  ✓  student gets 403
+
+↳ Login as admin before create
+  POST http://localhost:8080/api/auth/login [200 OK, 760B, 74ms]
+  ✓  admin login
+
+↳ Create temporary capacity-one event
+  POST http://localhost:8080/api/events [201 Created, 477B, 102ms]
+  ✓  created with id
+
+↳ Update temporary event
+  PUT http://localhost:8080/api/events/557 [200 OK, 744B, 23ms]
+  ✓  owner update succeeds
+
+↳ Login as second admin
+  POST http://localhost:8080/api/auth/login [200 OK, 762B, 72ms]
+  ✓  second admin login
+
+↳ Different admin cannot update owned event
+  PUT http://localhost:8080/api/events/557 [403 Forbidden, 516B, 10ms]
+  ✓  other admin gets 403
+
+↳ Login as owner admin
+  POST http://localhost:8080/api/auth/login [200 OK, 760B, 74ms]
+  ✓  owner admin login
+
+↳ Invalid category returns 400
+  POST http://localhost:8080/api/events [400 Bad Request, 489B, 6ms]
+  ✓  invalid enum rejected
+
+↳ Lowercase category returns 400
+  POST http://localhost:8080/api/events [400 Bad Request, 489B, 5ms]
+  ✓  lowercase enum rejected
+
+↳ Zero capacity returns 400
+  POST http://localhost:8080/api/events [400 Bad Request, 522B, 9ms]
+  ✓  capacity validated
+
+↳ Overlong title returns 400
+  POST http://localhost:8080/api/events [400 Bad Request, 528B, 6ms]
+  ✓  overlong title returns 400
+
+↳ Overlong location returns 400
+  POST http://localhost:8080/api/events [400 Bad Request, 534B, 6ms]
+  ✓  overlong location returns 400
+
+↳ Malformed JSON returns 400
+  POST http://localhost:8080/api/events [400 Bad Request, 489B, 5ms]
+  ✓  malformed JSON returns 400
+
+❏ Registrations
+↳ Login as student
+  POST http://localhost:8080/api/auth/login [200 OK, 757B, 75ms]
+  ✓  student login
+
+↳ Register current user (userId ignored)
+  POST http://localhost:8080/api/register [201 Created, 475B, 111ms]
+  ✓  registration created
+
+↳ Duplicate registration returns 409
+  POST http://localhost:8080/api/register [409 Conflict, 517B, 10ms]
+  ✓  duplicate blocked
+
+↳ List current user's registrations with ignored userId
+  GET http://localhost:8080/api/registrations?page=0&size=100&userId=999999 [200 OK, 4.59kB, 24ms]
+  ✓  student scope is not widened by userId
+
+↳ Login as different admin before registration delete check
+  POST http://localhost:8080/api/auth/login [200 OK, 762B, 82ms]
+  ✓  second admin login for registration scope
+
+↳ Different admin cannot delete registration
+  DELETE http://localhost:8080/api/registrations/1004 [403 Forbidden, 534B, 15ms]
+  ✓  different admin gets 403 for registration delete
+
+↳ Login as admin for full-event checks
+  POST http://localhost:8080/api/auth/login [200 OK, 760B, 85ms]
+  ✓  admin login
+
+↳ Admin registration scope does not widen
+  GET http://localhost:8080/api/registrations?eventId=999999&page=0&size=100 [200 OK, 515B, 8ms]
+  ✓  admin foreign event scope is empty
+
+↳ Full event rejects second account
+  POST http://localhost:8080/api/register [409 Conflict, 489B, 10ms]
+  ✓  full event blocked
+
+↳ Delete event with registration returns 409
+  DELETE http://localhost:8080/api/events/557 [409 Conflict, 521B, 18ms]
+  ✓  registered event retained
+
+↳ Login as student to cancel
+  POST http://localhost:8080/api/auth/login [200 OK, 757B, 91ms]
+  ✓  student login
+
+↳ Cancel own registration
+  DELETE http://localhost:8080/api/registrations/1004 [204 No Content, 371B, 16ms]
+  ✓  registration cancelled
+
+↳ Login as admin to clean up
+  POST http://localhost:8080/api/auth/login [200 OK, 760B, 103ms]
+  ✓  admin login
+
+↳ Delete temporary event after cancellation
+  DELETE http://localhost:8080/api/events/557 [204 No Content, 371B, 20ms]
+  ✓  empty event deleted
+
+↳ Missing event registration returns 404
+  POST http://localhost:8080/api/register [404 Not Found, 508B, 10ms]
+  ✓  unknown event rejected
+
+↳ Delete missing registration returns 404
+  DELETE http://localhost:8080/api/registrations/999999 [404 Not Found, 515B, 10ms]
+  ✓  missing registration deletion returns 404
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                44 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                44 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                45 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                46 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 2.8s                                       │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 11.83kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 48ms [min: 4ms, max: 236ms, s.d.: 53ms] │
+└────────────────────────────────────────────────────────────────┘
+
+
+== 3. Database state after the API run ==
+
+The collection creates one account, one capacity-one event and one registration, then
+deletes the event and registration. Only the account remains, so users is 101 while
+events and registrations match the seed again.
+
+$ docker compose exec -T db mysql -ucampus -pcampus123 campus_events --table -e "..."
++--------+---------------+-------+
+| events | registrations | users |
++--------+---------------+-------+
+|    555 |          1000 |   101 |
++--------+---------------+-------+
++----------------------+
+| leftover_temp_events |
++----------------------+
+|                    0 |
++----------------------+
++----------------+
+| over_200_chars |
++----------------+
+|              0 |
++----------------+

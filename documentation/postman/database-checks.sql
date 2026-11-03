@@ -293,26 +293,11 @@ INSERT INTO db_check_results VALUES
 
 
 -- -----------------------------------------------------
--- 5. Recorded run evidence (2026-11-01, see run.log)
--- The API created event 557 (created_by = 1, body sent 999999) and
--- registration 1002 (user_id = 6, body sent 999999), then removed both.
--- Set the ids from the API responses when re-running with a live stack.
+-- 5. Residue from API runs
+-- Collection runs create one temporary event and registration and
+-- delete both. The signup request adds one user per run, so the
+-- users baseline in section 1 is only valid on a fresh seed.
 -- -----------------------------------------------------
-
-SET @event_id = 557;
-SET @registration_id = 1002;
-
-INSERT INTO db_check_results
-SELECT 'recorded run', CONCAT('event ', @event_id, ' removed'), COUNT(*), '0',
-       IF(COUNT(*) = 0, 'PASS', 'FAIL')
-FROM events
-WHERE id = @event_id;
-
-INSERT INTO db_check_results
-SELECT 'recorded run', CONCAT('registration ', @registration_id, ' removed'), COUNT(*), '0',
-       IF(COUNT(*) = 0, 'PASS', 'FAIL')
-FROM registrations
-WHERE id = @registration_id;
 
 INSERT INTO db_check_results
 SELECT 'recorded run', 'leftover temporary QA events', COUNT(*), '0',
@@ -321,10 +306,24 @@ FROM events
 WHERE title LIKE 'Postman QA Temporary Event%';
 
 INSERT INTO db_check_results
+SELECT 'recorded run', 'registrations on temporary QA events', COUNT(*), '0',
+       IF(COUNT(*) = 0, 'PASS', 'FAIL')
+FROM registrations r
+JOIN events e ON e.id = r.event_id
+WHERE e.title LIKE 'Postman QA Temporary Event%';
+
+INSERT INTO db_check_results
 SELECT 'recorded run', 'rows over the 200-char column limit', COUNT(*), '0',
        IF(COUNT(*) = 0, 'PASS', 'FAIL')
 FROM events
 WHERE CHAR_LENGTH(title) > 200 OR CHAR_LENGTH(location) > 200;
+
+INSERT INTO db_check_results
+SELECT 'recorded run', 'duplicate registrations for one user and event', COUNT(*), '0',
+       IF(COUNT(*) = 0, 'PASS', 'FAIL')
+FROM (SELECT user_id, event_id FROM registrations
+      GROUP BY user_id, event_id
+      HAVING COUNT(*) > 1) AS duplicates;
 
 
 -- -----------------------------------------------------
