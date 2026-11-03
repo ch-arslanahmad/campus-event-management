@@ -6,11 +6,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 public record EventRequest(
-    @NotBlank(message = "Title is required") String title,
+    @NotBlank(message = "Title is required")
+    @Size(max = 200, message = "Title must be at most 200 characters")
+    String title,
     String description,
 
     @Pattern(
@@ -26,7 +29,9 @@ public record EventRequest(
     )
     @NotBlank(message = "Time is required")
     String time,
-    @NotBlank(message = "Location is required") String location,
+    @NotBlank(message = "Location is required")
+    @Size(max = 200, message = "Location must be at most 200 characters")
+    String location,
     @NotNull(message = "Category is required") CategoryType category,
 
     @NotNull(message = "Capacity is required")

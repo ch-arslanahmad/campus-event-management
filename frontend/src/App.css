@@ -338,3 +338,23 @@ form input:focus { border-color: var(--blue); outline: none; }
 .admin-toolbar { align-items: center; display: flex; justify-content: space-between; gap: 24px; margin: 32px 0 24px; }.admin-toolbar h2 { font-size: 1.35rem; margin: 0 0 5px; }.admin-toolbar p { color: var(--muted); }.admin-create { align-items: center; display: inline-flex; gap: 9px; white-space: nowrap; }.admin-create span { align-items: center; background: rgba(255,255,255,.2); border-radius: 50%; display: inline-flex; font-size: 1.35rem; height: 22px; justify-content: center; line-height: 1; width: 22px; }.event-editor__card { margin: 0 auto; width: min(820px, 100%); }.event-editor__card h1 { font-size: clamp(2rem, 4vw, 2.8rem); margin: 6px 0 0; }.event-editor__card .lead { margin: 12px 0 26px; }.event-editor__actions .btn { min-width: 170px; text-align: center; }.event-editor__error { display: grid; gap: 18px; justify-items: start; }
 @media (max-width: 960px) { .admin-layout { grid-template-columns: 1fr; gap: 24px; }.admin-nav { position: static; }.admin-nav nav { display: flex; overflow-x: auto; }.admin-nav button { white-space: nowrap; }.metrics { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 680px) { .admin-heading, .admin-panels { grid-template-columns: 1fr; display: grid; }.metrics { grid-template-columns: 1fr 1fr; }.admin-heading .btn { width: 100%; text-align: center; }.admin-toolbar { align-items: stretch; flex-direction: column; }.admin-create { justify-content: center; }.event-editor__card { padding: 24px 18px; }.event-editor__actions { flex-direction: column-reverse; }.event-editor__actions .btn { min-width: 0; width: 100%; }.event-editor__card .lead { font-size: 1.05rem; }.admin-filters .search { width: 100%; }.table-cue { display: block; } }
+
+/* Admin filters (issue #17) */
+.chip-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.admin-filters { align-items: center; display: flex; flex-wrap: wrap; gap: 12px 18px; margin: 24px 0 12px; }
+.admin-filters--status { margin-top: 0; }
+.admin-filters .search { margin-left: auto; min-width: 220px; }
+.filter-label { color: var(--muted); font-size: .9rem; font-weight: 700; }
+.admin-result-count { margin: 6px 0 14px; }
+.status--past { background: #ECEEF8; color: var(--muted); }
+.admin__table td, .admin__table th { white-space: nowrap; }
+.admin__table td:first-child { min-width: 200px; white-space: normal; }
+.admin__table td .status { display: inline-block; }
+@media (max-width: 680px) { .admin-filters .search { margin-left: 0; min-width: 0; width: 100%; } }
+
+/* Responsive fixes: keep category chips as a wrapping row (they were stretched into full-width bars below 1280px) */
+.chip { font-family: 'DM Sans', system-ui, sans-serif; }
+.filters .chip-row { flex: 1 1 auto; }
+td.admin__row-actions { display: table-cell; white-space: nowrap; }
+td.admin__row-actions > * { margin-right: 8px; }
+.search, .admin-filters .search { font-family: 'DM Sans', system-ui, sans-serif; }
