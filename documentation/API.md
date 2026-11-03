@@ -1,6 +1,6 @@
 # Verified API contract
 
-Base URL: `http://localhost:8080`. JSON requests and responses use `application/json`. Authentication uses an `HttpOnly` `jwt_token` cookie set by login/signup; send the cookie on protected calls. No bearer token is returned. Statuses below were checked against the local Docker stack on 2026-11-01.
+Base URL: `http://localhost:8080`. JSON requests and responses use `application/json`. Authentication uses an `HttpOnly` `jwt_token` cookie set by login/signup; send the cookie on protected calls. No bearer token is returned. Statuses below were checked against the local Docker stack on 2026-11-03.
 
 ## Auth
 
@@ -19,8 +19,8 @@ Base URL: `http://localhost:8080`. JSON requests and responses use `application/
 |---|---|---|---|
 | `GET /api/events` | Public | 200 | Page envelope: `content`, `page`, `size`, `totalElements`, `totalPages`, `first`, `last`. Verified `page=0&size=12` returns 12 rows and 555 total. Supports `category`, `createdBy`, `featured`, `from`, `q`, `page`, `size`. |
 | `GET /api/events/{id}` | Public | 200, 404 | Returns one event; unknown id returns 404. |
-| `POST /api/events` | Admin | 201, 400, 401, 403, 500 | Body: nonblank `title`, `date` (`YYYY-MM-DD`), `time` (`HH:mm`), `location`, enum `category` (`SEMINAR`, `WORKSHOP`, `SPORTS`, `COMPETITION`, `CONFERENCE`, `CULTURAL`), positive integer `capacity`; optional `description`, `featured`. Owner comes from cookie; supplied `createdBy` is ignored. Success returns new `id`. Invalid category/case, missing fields, and capacity 0 return 400. **Known bug:** title or location longer than 200 characters returns 500 (generic response, no SQL text). |
-| `PUT /api/events/{id}` | Owning admin | 200, 400, 401, 403, 404, 500 | Same body rules as create. Owning admin updates; another admin or student gets 403. Overlong title/location also returns 500. |
+| `POST /api/events` | Admin | 201, 400, 401, 403 | Body: nonblank `title`, `date` (`YYYY-MM-DD`), `time` (`HH:mm`), `location`, enum `category` (`SEMINAR`, `WORKSHOP`, `SPORTS`, `COMPETITION`, `CONFERENCE`, `CULTURAL`), positive integer `capacity`; optional `description`, `featured`. Owner comes from cookie; supplied `createdBy` is ignored. Success returns new `id`. Invalid category/case, missing fields, capacity 0, and a title or location over 200 characters return 400; overlong text returns `Title must be at most 200 characters` / `Location must be at most 200 characters`. |
+| `PUT /api/events/{id}` | Owning admin | 200, 400, 401, 403, 404 | Same body rules as create, including the 200-character limit on title/location. Owning admin updates; another admin or student gets 403. |
 | `DELETE /api/events/{id}` | Owning admin | 204, 401, 403, 404, 409 | Empty event deletion returns 204. Event with registrations returns 409 and is retained. |
 
 ## Registrations
@@ -33,4 +33,6 @@ Base URL: `http://localhost:8080`. JSON requests and responses use `application/
 
 ## Error handling and findings
 
-Malformed JSON and missing required event fields return 400. Long title/location values (201 characters, beyond the schema's 200-character columns) currently produce 500 with `Unexpected server error.` and no SQL details. See [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43).
+Malformed JSON and missing required event fields return 400. Validation failures share one body shape: `{"status":400,"error":"Bad Request","message":"Validation failed.","fields":{"<field>":"<message>"}}`. A title or location over 200 characters returns 400 with `Title must be at most 200 characters` or `Location must be at most 200 characters`. Unexpected failures return 500 with `Unexpected server error.` and no SQL text.
+
+See [issue #43](https://github.com/ch-arslanahmad/campus-event-management/issues/43) for the overlong-text fix and `postman/run.log` for the recorded run.
