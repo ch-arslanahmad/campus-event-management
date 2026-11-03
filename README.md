@@ -30,10 +30,14 @@ campus-event-management/
 │   ├── ERD.png
 │   ├── SETUP.md
 │   ├── API.md
+│   ├── QA-REPORT.md
 │   ├── JWT-STORAGE.md
+│   ├── postman/
+│   ├── qa/
 │   └── adr/
 │       ├── 0001-spring-boot-backend.md
-│       └── 0002-jwt-in-httponly-cookies.md
+│       ├── 0002-jwt-in-httponly-cookies.md
+│       └── 0003-server-side-pagination.md
 ├── .github/
 │   ├── CODEOWNERS
 │   ├── pull_request_template.md
@@ -118,13 +122,19 @@ Learn about the development flow in the [CONTRIBUTING.md](CONTRIBUTING.md)
 
 All list endpoints are paginated: `?page=` (0-based, default `0`) and `?size=` (default `20`, max `100`); they answer with `{content, page, size, totalElements, totalPages, first, last}`. Rules and rationale: [ADR-0003](documentation/adr/0003-server-side-pagination.md).
 
-Better explaination would be in its (to be created ) API documentation file.
+Full contract, statuses and error shapes: [documentation/API.md](documentation/API.md).
 
 Auth is cookie-based (one httpOnly `jwt_token` cookie, no token in JSON). Design and rationale: [documentation/JWT-STORAGE.md](documentation/JWT-STORAGE.md) and [ADR-0002](documentation/adr/0002-jwt-in-httponly-cookies.md).
 
 ### Example Requests
 
 _Request/response examples are still being collected. Demo accounts, database setup and how to run the backend are in [documentation/SETUP.md](documentation/SETUP.md)._
+
+### Testing
+
+- API: import [documentation/postman](documentation/postman/README.md) into Postman or run it headless with Newman; the recorded run is 44 requests and 46 assertions, all passing.
+- Database: `documentation/postman/database-checks.sql` prints 34 PASS/FAIL checks; last output in `database-checks-output.txt`.
+- Frontend: scripted browser checks in `documentation/qa/frontend-smoke.cjs`, results in [documentation/QA-REPORT.md](documentation/QA-REPORT.md).
 
 ## Database Schema
 
