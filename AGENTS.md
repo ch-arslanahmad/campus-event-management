@@ -20,9 +20,9 @@ Architecture decisions live in `documentation/adr/`. Read them before "fixing" s
 - Schema and demo data: `backend/database/schema.sql` + `seed.sql` (100 users, 555 events, 1000 registrations).
 - Frontend exists under `frontend/` (React + Vite).
 - CI on every PR into `main`: `.github/workflows/ci.yml` (backend `mvnw verify` on a seeded MySQL 8.4 service, frontend lint/test/build, plus a check that the PR body has a `Closes #N` line). PR template lives in `.github/pull_request_template.md`.
-- `screenshots/` is still absent — a graded deliverable (brief §20).
+- `screenshots/` exists with the images used by the README.
 - Local DB setup, demo accounts: `documentation/SETUP.md`.
-- Server-side pagination (ADR-0003, issue #15) is not implemented yet.
+- Server-side pagination (ADR-0003, issue #15) is implemented.
 
 ## Documentation conventions
 

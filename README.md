@@ -1,10 +1,10 @@
 # Campus Event Management System
 
-A full-stack web application for managing university events. Students can discover, search, filter, and register for campus seminars, workshops, sports events, and competitions.
+A full-stack web application for managing university events. Students can browse, search, filter and register for campus seminars, workshops, sports events, competitions, conferences and cultural activities. Administrators can create, update and delete the events they own.
 
 ## Prerequisites
 
-- Java 17+
+- Java 21
 - Node.js & npm
 - MySQL server
 - Git
@@ -19,11 +19,12 @@ campus-event-management/
 │       ├── components/
 │       └── pages/
 ├── backend/
-│   └── src/main/java/com/campus/event/
-│       ├── controller/
+│   ├── database/                   # MySQL schema and demo seed
+│   └── src/main/java/com/events/eventmanagement/
+│       ├── controllers/
 │       ├── service/
-│       ├── model/
-│       ├── repository/
+│       ├── models/
+│       ├── repositories/
 │       └── dto/
 ├── documentation/
 │   ├── ERD.md
@@ -45,6 +46,7 @@ campus-event-management/
 │       ├── ci.yml
 │       └── opencode.yml
 ├── screenshots/
+├── compose.yaml                    # local three-service Docker stack
 ├── README.md
 ├── CONTRIBUTING.md
 ├── AGENTS.md
@@ -70,7 +72,7 @@ campus-event-management/
 ## Features
 
 - View and search events by keyword
-- Filter events by category (Seminar, Workshop, Sports, Competition)
+- Filter events by category (Seminar, Workshop, Sports, Competition, Conference, Cultural)
 - User registration and login
 - Event registration for students
 - Admin panel for creating, updating, and deleting events
@@ -88,8 +90,8 @@ Frontend:
 
 ```
 cd frontend
-npm install
-npm start
+npm ci
+npm run dev
 ```
 
 Backend:
@@ -101,6 +103,16 @@ mvn spring-boot:run
 ```
 
 See [documentation/SETUP.md](documentation/SETUP.md) for database configuration, deployment, and troubleshooting.
+
+### Docker quick start
+
+To run the frontend, API and a seeded MySQL database together:
+
+```
+docker compose up --build
+```
+
+Open `http://localhost` (the frontend publishes host port 80). The API is available at `http://localhost:8080` and MySQL is mapped to host port `3307` (localhost only). Stop the stack with `docker compose down`; use `docker compose down -v` only when you want to remove local database data and reload the seed.
 
 ## Development Flow
 
@@ -129,6 +141,20 @@ Auth is cookie-based (one httpOnly `jwt_token` cookie, no token in JSON). Design
 ### Example Requests
 
 _Request/response examples are still being collected. Demo accounts, database setup and how to run the backend are in [documentation/SETUP.md](documentation/SETUP.md)._
+
+## Screenshots
+
+The repository includes the visual evidence required by the brief:
+
+| Screen or evidence             | File                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| Event list                     | [events.png](screenshots/events.png)                                                   |
+| Login                          | [login.png](screenshots/login.png)                                                     |
+| Event pagination               | [events-pagination.png](screenshots/events-pagination.png)                             |
+| Administrator dashboard        | [admin-dashboard.jpg](screenshots/admin-dashboard.jpg)                                 |
+| Administrator filters          | [admin-dashboard-filters.png](screenshots/admin-dashboard-filters.png)                 |
+| Mobile administrator dashboard | [admin-dashboard-mobile.png](screenshots/admin-dashboard-mobile.png)                   |
+| Postman collection setup       | [postman-collection-runner-setup.jpg](screenshots/postman-collection-runner-setup.jpg) |
 
 ### Testing
 
@@ -185,3 +211,7 @@ UNIQUE (user_id, event_id)
 ## License
 
 MIT License, see [LICENSE](LICENSE).
+
+## Submission evidence
+
+The source code, frontend, backend, MySQL schema and seed, screenshots, API documentation and installation instructions are kept in this repository. Before submission, the team lead should verify the GitHub-side evidence required by the brief: each student has meaningful commits, an assigned issue, a feature branch, a pull request and a review. The team workflow is documented in [CONTRIBUTING.md](CONTRIBUTING.md).

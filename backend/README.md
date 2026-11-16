@@ -1,59 +1,62 @@
-# Backend — Campus Events
+# Backend
 
-Spring Boot (Java 21, Maven) REST API. Stack decision: [ADR-0001](../documentation/adr/0001-spring-boot-backend.md).
+Spring Boot 4.1 (Java 21, Maven) REST API for Campus Event Management. It uses Spring Data JPA with MySQL, Spring Security for role checks and a JWT stored in an `HttpOnly` cookie. The stack choice is recorded in [ADR-0001](../documentation/adr/0001-spring-boot-backend.md).
 
-> **Subject to change** — early development. Update this file in the same PR when things change.
+## Run locally
 
-## Commands
+The database must be available before starting the API. Follow the complete database instructions in [documentation/SETUP.md](../documentation/SETUP.md), then run:
 
-    ./mvnw spring-boot:run      # dev server on :8080 (Ctrl+C to stop)
+```shell
+./mvnw verify
+./mvnw spring-boot:run
+```
+
+The API starts on `http://localhost:8080`. A running instance exposes health at `/actuator/health`.
 
 ## Structure
 
-    backend/
-    ├── pom.xml                      # deps (DB stack paused, see comment inside pom.xml)
-    ├── src/main/java/com/events/eventmanagement/
-    ├── src/main/resources/
-    │   └── application.properties   # app config (DB block added at integration)
-    └── database/                    # DB source-of-truth files
+```
+backend/
+├── database/
+│   ├── schema.sql                 # MySQL schema
+│   └── seed.sql                   # 100 users, 555 events, 1000 registrations
+├── src/main/java/com/events/eventmanagement/
+│   ├── config/                    # security, JWT and CORS configuration
+│   ├── controllers/               # HTTP endpoints
+│   ├── dto/                       # request and response types
+│   ├── models/                    # JPA entities
+│   ├── repositories/              # Spring Data repositories
+│   └── services/                  # application rules
+└── src/main/resources/
+    └── application.properties     # default local configuration
+```
 
-## Database setup
+## Database and configuration
 
-Own local DB per teammate. Same 3 files = same DB everywhere.
+The local defaults connect to MySQL database `campus_events` as user `campus`. `schema.sql` owns the database structure and `seed.sql` loads the demo data. Hibernate never changes the schema.
 
-    database/
-    ├── setup.sql    # create DB + user, once per machine
-    ├── schema.sql   # tables
-    └── seed.sql     # rows
+For another environment, set `APP_DB_URL`, `APP_DB_USER` and `APP_DB_PASSWORD`. Set a strong `APP_JWT_SECRET` before deploying; the configured default is for local development only.
 
-### Setup (once)
+## API and testing
 
-1. Install [MySQL](https://dev.mysql.com/downloads/windows/installer/8.0.html).
-2. Run `setup.sql`, `schema.sql`, `seed.sql` (in order)
-3. Testing creds (local dev DB only, never production): `campus` / `campus123` in `application.properties`.
-4. `./mvnw spring-boot:run`
+The API contract and observed status codes are in [documentation/API.md](../documentation/API.md). Import the Postman collection from [documentation/postman](../documentation/postman/README.md) to repeat the API checks. Cookie authentication, including its security trade-offs, is described in [documentation/JWT-STORAGE.md](../documentation/JWT-STORAGE.md).
 
-Run `.sql` file:
+## Team workflow
 
-    # Workbench: open file → ⚡ (nothing selected = whole file)
-    # CLI:        mysql -u campus -p campus_events < database/schema.sql
-    # PowerShell: Get-Content .\database\schema.sql -Raw | mysql -u campus -p campus_events
+Work starts from an issue and moves through a feature branch, pull request and lead review. See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-### Reset (DB broken / schema changed)
+## Docker port mapping note
 
-    DROP DATABASE campus_events;
-    -- rerun all 3 files
+In `compose.yaml` the port syntax is **`host:container`**.
 
-Seed-only data, so reset always safe. Schema change announced in chat → everyone resets.
+```yaml
+ports:
+  - "80:80"
+```
 
-### SQL rules
+- **80** (left) = published (host) port — the one you type in the browser (`http://localhost`).
+- **80** (right) = container port — where nginx actually listens inside the container.
 
-Standard DDL only (`AUTO_INCREMENT`, `ENUM`, `VARCHAR`, `DATE`, `UNIQUE`, FK). Files start with `USE campus_events;`.
+Backend (`127.0.0.1:8080:8080`) and db (`127.0.0.1:3307:3306`) bind to localhost only; only the frontend publishes on all interfaces, since it is the public entry point.
 
-> DB stack in `pom.xml` + `application.properties` paused (dummy-data phase). Re-enable both together at integration.
-
-## Notes
-
-- Lombok: enable annotation processing in IDE
-  (IntelliJ: Settings → Build, Execution, Deployment → Compiler → Annotation Processors → Enable)
-- Branch flow: issue → feature/* → PR → review → merge (see /CONTRIBUTING.md)
+This is a common source of confusion; keep the order `host:container` in mind when editing the compose file or adding new ports.
